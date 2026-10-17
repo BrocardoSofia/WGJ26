@@ -141,7 +141,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private bool TryStartNpcApproach()
     {
-        if (interactionRanges == null || interactionRanges.NpcCallRadius <= 0f)
+        if (interactionRanges == null ||
+            (interactionRanges.NpcCallRadius <= 0f && interactionRanges.CoffeeNpcCallRadius <= 0f))
             return false;
 
         while (waitingNpcs.Count > 0)
@@ -217,8 +218,15 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private bool IsInsideNpcCallRange(Transform npc)
     {
-        float callRadius = interactionRanges.NpcCallRadius;
+        float callRadius = GetCallRadiusForNpc(npc);
         return PlanarSqrDistanceToNpcEdge(npc) <= callRadius * callRadius;
+    }
+
+    private float GetCallRadiusForNpc(Transform npc)
+    {
+        return npc != null && npc.CompareTag("CoffeeNPC")
+            ? interactionRanges.CoffeeNpcCallRadius
+            : interactionRanges.NpcCallRadius;
     }
 
     private void ApproachActiveNpc()
@@ -460,7 +468,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         {
             float centerDistance = Mathf.Sqrt(PlanarCenterSqrDistance(activeNpc));
             NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(activeNpc);
-            float callDistance = interactionRanges.NpcCallRadius + GetNpcCallExtent(activeNpc);
+            float callDistance = GetCallRadiusForNpc(activeNpc) + GetNpcCallExtent(activeNpc);
             float interactionTouchDistance = interactionRanges.NpcInteractionRadius + npcCircle.Radius;
             float proximity = callDistance > interactionTouchDistance
                 ? Mathf.InverseLerp(callDistance, interactionTouchDistance, centerDistance)

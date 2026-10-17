@@ -466,6 +466,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSceneCircle
   npcCallDiameter: 31.1
+  coffeeNpcCallDiameter: 16.7
   npcInteractionDiameter: 6
 --- !u!114 &254466915
 MonoBehaviour:
