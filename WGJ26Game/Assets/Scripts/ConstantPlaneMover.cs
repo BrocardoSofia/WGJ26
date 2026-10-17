@@ -116,8 +116,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
         foreach (GameObject npc in interactiveNpcs)
         {
-            float passedDistance = transform.position.x - npc.transform.position.x;
-            if (passedDistance > interactionRanges.NpcInteractionDiameter)
+            if (HasPassedNpcByInteractionDiameter(npc.transform))
             {
                 npc.tag = "NPC";
                 continue;
@@ -143,6 +142,15 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         if (activeNpc == null || !activeNpc.CompareTag("InteractiveNPC"))
         {
+            movementState = MovementState.ReturningToOriginalZ;
+            return;
+        }
+
+        if (HasPassedNpcByInteractionDiameter(activeNpc))
+        {
+            activeNpc.tag = "NPC";
+            activeNpc = null;
+            noCorrectionTimer = 0f;
             movementState = MovementState.ReturningToOriginalZ;
             return;
         }
@@ -251,6 +259,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         Renderer npcRenderer = npc.GetComponent<Renderer>();
         return npcRenderer != null ? npcRenderer.bounds.extents.x : 0f;
+    }
+
+    private bool HasPassedNpcByInteractionDiameter(Transform npc)
+    {
+        float horizontalDistanceAfterPassing = transform.position.x - npc.position.x;
+        return horizontalDistanceAfterPassing >= interactionRanges.NpcInteractionDiameter;
     }
 
     private void UpdateNpcWait()
