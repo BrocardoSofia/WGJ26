@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
@@ -19,6 +20,12 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     [SerializeField, InspectorName("Panel de Game Over")]
     private GameObject gameOverPanel;
 
+    [SerializeField, InspectorName("Botón volver a intentar")]
+    private Button retryButton;
+
+    [SerializeField, InspectorName("Botón volver al menú")]
+    private Button returnToMenuButton;
+
     private ConstantPlaneMover playerMovement;
     private bool gameOver;
 
@@ -27,6 +34,11 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     private void Awake()
     {
         playerMovement = GetComponent<ConstantPlaneMover>();
+        if (retryButton != null)
+            retryButton.onClick.AddListener(Retry);
+        if (returnToMenuButton != null)
+            returnToMenuButton.onClick.AddListener(ReturnToMenu);
+
         RefreshCounter();
         if (coffeeCount >= coffeesForGameOver)
             TriggerGameOver();
@@ -39,14 +51,16 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         if (amount <= 0 || gameOver)
             return;
 
-        coffeeCount += amount;
-        RefreshCounter();
-
-        if (coffeeCount >= coffeesForGameOver)
+        if (coffeeCount + amount >= coffeesForGameOver)
         {
+            coffeeCount = coffeesForGameOver - 1;
+            RefreshCounter();
             TriggerGameOver();
             return;
         }
+
+        coffeeCount += amount;
+        RefreshCounter();
 
         if (playerMovement == null)
             playerMovement = GetComponent<ConstantPlaneMover>();
@@ -69,13 +83,30 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         Time.timeScale = 0f;
     }
 
+    public void Retry()
+    {
+        ResumeBeforeChangingScene();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void ReturnToMenu()
+    {
+        ResumeBeforeChangingScene();
+        SceneManager.LoadScene("0.Menu");
+    }
+
+    private void ResumeBeforeChangingScene()
+    {
+        Time.timeScale = 1f;
+        VoiceNoDetector.InputBlocked = false;
+    }
+
     private void OnDestroy()
     {
         if (!gameOver)
             return;
 
-        Time.timeScale = 1f;
-        VoiceNoDetector.InputBlocked = false;
+        ResumeBeforeChangingScene();
     }
 
     private void OnValidate()
