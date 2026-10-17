@@ -24,20 +24,23 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     private GameObject runtimeDisc;
     private Mesh runtimeMesh;
     private Material runtimeMaterial;
+    private Renderer npcRenderer;
+    private Camera mainCamera;
+    private readonly Plane[] cameraFrustumPlanes = new Plane[6];
     private bool callActive;
 
     public float Radius => diameter * 0.5f;
     public float RequiredOverlap => requiredOverlap;
 
-    private void Awake()
-    {
-        CreateRuntimeDisc();
-    }
-
     private void LateUpdate()
     {
-        if (runtimeDisc == null)
+        if (!callActive || !IsVisibleToMainCamera())
+        {
+            DestroyRuntimeDisc();
             return;
+        }
+
+        CreateRuntimeDisc();
 
         float groundY = transform.position.y - transform.localScale.y * 0.5f + GroundOffset;
         runtimeDisc.transform.SetPositionAndRotation(
@@ -49,17 +52,21 @@ public sealed class NpcInteractionCircle : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (runtimeDisc != null)
-            Destroy(runtimeDisc);
-        if (runtimeMaterial != null)
-            Destroy(runtimeMaterial);
-        if (runtimeMesh != null)
-            Destroy(runtimeMesh);
+        DestroyRuntimeDisc();
+    }
+
+    private void OnDisable()
+    {
+        DestroyRuntimeDisc();
     }
 
     public void SetCallActive(bool active)
     {
+        if (callActive == active && enabled == active)
+            return;
+
         callActive = active;
+        enabled = active;
     }
 
 #if UNITY_EDITOR
@@ -98,6 +105,36 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         ConfigureTransparentMaterial(runtimeMaterial);
         meshRenderer.sharedMaterial = runtimeMaterial;
         SetDiscAlpha(0f);
+    }
+
+    private bool IsVisibleToMainCamera()
+    {
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+        if (mainCamera == null)
+            return false;
+
+        if (npcRenderer == null)
+            npcRenderer = GetComponent<Renderer>();
+        if (npcRenderer == null)
+            return false;
+
+        GeometryUtility.CalculateFrustumPlanes(mainCamera, cameraFrustumPlanes);
+        return GeometryUtility.TestPlanesAABB(cameraFrustumPlanes, npcRenderer.bounds);
+    }
+
+    private void DestroyRuntimeDisc()
+    {
+        if (runtimeDisc != null)
+            Destroy(runtimeDisc);
+        if (runtimeMaterial != null)
+            Destroy(runtimeMaterial);
+        if (runtimeMesh != null)
+            Destroy(runtimeMesh);
+
+        runtimeDisc = null;
+        runtimeMaterial = null;
+        runtimeMesh = null;
     }
 
     private void SetDiscAlpha(float alpha)

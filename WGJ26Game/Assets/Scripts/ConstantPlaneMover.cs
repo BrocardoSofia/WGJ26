@@ -46,6 +46,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private float noCorrectionTimer;
     private readonly List<Transform> waitingNpcs = new();
     private readonly HashSet<NpcInteractionCircle> trackedNpcCircles = new();
+    private readonly HashSet<NpcInteractionCircle> activeNpcCirclesThisFrame = new();
     private GameObject npcCallIndicator;
     private Mesh npcCallIndicatorMesh;
     private Material npcCallIndicatorMaterial;
@@ -167,11 +168,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (interactionRanges == null)
             return;
 
-        foreach (NpcInteractionCircle circle in trackedNpcCircles)
-        {
-            if (circle != null)
-                circle.SetCallActive(false);
-        }
+        activeNpcCirclesThisFrame.Clear();
 
         for (int index = waitingNpcs.Count - 1; index >= 0; index--)
         {
@@ -187,6 +184,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         AddNpcCallsWithTag("InteractiveNPC", newCalls);
         AddNpcCallsWithTag("CoffeeNPC", newCalls);
 
+        foreach (NpcInteractionCircle circle in trackedNpcCircles)
+        {
+            if (circle != null)
+                circle.SetCallActive(activeNpcCirclesThisFrame.Contains(circle));
+        }
+
         newCalls.Sort((first, second) =>
             PlanarSqrDistanceToNpcEdge(first).CompareTo(PlanarSqrDistanceToNpcEdge(second)));
         waitingNpcs.AddRange(newCalls);
@@ -200,7 +203,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(npc);
             trackedNpcCircles.Add(npcCircle);
             bool isInsideCallRange = IsInsideNpcCallRange(npc);
-            npcCircle.SetCallActive(isInsideCallRange);
+            if (isInsideCallRange)
+                activeNpcCirclesThisFrame.Add(npcCircle);
 
             if (npc == activeNpc || waitingNpcs.Contains(npc))
                 continue;
