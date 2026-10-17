@@ -18,6 +18,9 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Superposición para iniciar interacción")]
     private float requiredOverlap = 0.25f;
 
+    [SerializeField, InspectorName("Color del círculo")]
+    private Color circleColor = new(0f, 0.35f, 1f, 1f);
+
     private GameObject runtimeDisc;
     private Mesh runtimeMesh;
     private Material runtimeMaterial;
@@ -64,7 +67,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     {
         Color previousColor = Handles.color;
         CompareFunction previousZTest = Handles.zTest;
-        Handles.color = Color.blue;
+        Handles.color = circleColor;
         Handles.zTest = CompareFunction.Always;
         Handles.DrawWireDisc(transform.position, Vector3.up, Radius);
         Handles.color = previousColor;
@@ -102,7 +105,8 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         if (runtimeMaterial == null)
             return;
 
-        Color color = new(0f, 0.35f, 1f, Mathf.Clamp01(alpha));
+        Color color = new(circleColor.r, circleColor.g, circleColor.b,
+            Mathf.Clamp01(alpha * circleColor.a));
         if (runtimeMaterial.HasProperty("_BaseColor"))
             runtimeMaterial.SetColor("_BaseColor", color);
         if (runtimeMaterial.HasProperty("_Color"))

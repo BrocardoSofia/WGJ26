@@ -148,7 +148,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         {
             Transform nextNpc = waitingNpcs[0];
             waitingNpcs.RemoveAt(0);
-            if (nextNpc == null || !nextNpc.CompareTag("InteractiveNPC"))
+            if (!IsCallableNpc(nextNpc))
                 continue;
             if (!IsInsideNpcCallRange(nextNpc))
                 continue;
@@ -175,7 +175,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         for (int index = waitingNpcs.Count - 1; index >= 0; index--)
         {
             Transform queuedNpc = waitingNpcs[index];
-            if (queuedNpc == null || !queuedNpc.CompareTag("InteractiveNPC") ||
+            if (!IsCallableNpc(queuedNpc) ||
                 !IsInsideNpcCallRange(queuedNpc))
             {
                 waitingNpcs.RemoveAt(index);
@@ -183,7 +183,17 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         }
 
         List<Transform> newCalls = new();
-        foreach (GameObject npcObject in GameObject.FindGameObjectsWithTag("InteractiveNPC"))
+        AddNpcCallsWithTag("InteractiveNPC", newCalls);
+        AddNpcCallsWithTag("CoffeeNPC", newCalls);
+
+        newCalls.Sort((first, second) =>
+            PlanarSqrDistanceToNpcEdge(first).CompareTo(PlanarSqrDistanceToNpcEdge(second)));
+        waitingNpcs.AddRange(newCalls);
+    }
+
+    private void AddNpcCallsWithTag(string npcTag, List<Transform> newCalls)
+    {
+        foreach (GameObject npcObject in GameObject.FindGameObjectsWithTag(npcTag))
         {
             Transform npc = npcObject.transform;
             NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(npc);
@@ -203,10 +213,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             if (isInsideCallRange)
                 newCalls.Add(npc);
         }
-
-        newCalls.Sort((first, second) =>
-            PlanarSqrDistanceToNpcEdge(first).CompareTo(PlanarSqrDistanceToNpcEdge(second)));
-        waitingNpcs.AddRange(newCalls);
     }
 
     private bool IsInsideNpcCallRange(Transform npc)
@@ -217,7 +223,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void ApproachActiveNpc()
     {
-        if (activeNpc == null || !activeNpc.CompareTag("InteractiveNPC"))
+        if (!IsCallableNpc(activeNpc))
         {
             activeNpc = null;
             if (!TryStartNpcApproach())
@@ -275,10 +281,38 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void OnNoDetected()
     {
+        if (RejectActiveCoffeeNpc())
+            return;
+
         if (movementState != MovementState.ApproachingNpc)
             return;
 
         noCorrectionTimer = noCorrectionDuration;
+    }
+
+    private bool RejectActiveCoffeeNpc()
+    {
+        if (movementState != MovementState.ApproachingNpc || activeNpc == null ||
+            !activeNpc.CompareTag("CoffeeNPC") || !IsInsideNpcCallRange(activeNpc))
+            return false;
+
+        Transform rejectedNpc = activeNpc;
+        waitingNpcs.Remove(rejectedNpc);
+        NpcInteractionCircle npcCircle = rejectedNpc.GetComponent<NpcInteractionCircle>();
+        if (npcCircle != null)
+            npcCircle.SetCallActive(false);
+
+        rejectedNpc.tag = "NPC";
+        CoffeeNpc coffeeBehaviour = rejectedNpc.GetComponent<CoffeeNpc>();
+        if (coffeeBehaviour != null)
+            coffeeBehaviour.Reject();
+
+        activeNpc = null;
+        noCorrectionTimer = 0f;
+        if (!TryStartNpcApproach())
+            movementState = MovementState.ReturningToOriginalZ;
+
+        return true;
     }
 
     private void BeginPositioningAtNpc()
@@ -291,7 +325,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void MoveToNpcInteractionPosition()
     {
-        if (activeNpc == null || !activeNpc.CompareTag("InteractiveNPC"))
+        if (!IsCallableNpc(activeNpc))
         {
             movementState = MovementState.ReturningToOriginalZ;
             return;
@@ -360,6 +394,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         return horizontalDistanceAfterPassing >= interactionRanges.NpcInteractionDiameter;
     }
 
+    private static bool IsCallableNpc(Transform npc)
+    {
+        return npc != null &&
+            (npc.CompareTag("InteractiveNPC") || npc.CompareTag("CoffeeNPC"));
+    }
+
     private void CreateNpcCallIndicator()
     {
         if (interactionRanges == null || npcCallIndicator != null)
@@ -403,7 +443,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
         float alpha = 0f;
         if (movementState == MovementState.ApproachingNpc &&
-            activeNpc != null && activeNpc.CompareTag("InteractiveNPC"))
+            IsCallableNpc(activeNpc))
         {
             float centerDistance = Mathf.Sqrt(PlanarCenterSqrDistance(activeNpc));
             NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(activeNpc);
@@ -488,11 +528,19 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (waitTimer > 0f)
             return;
 
-        if (activeNpc != null && activeNpc.CompareTag("InteractiveNPC"))
+        if (IsCallableNpc(activeNpc))
         {
             NpcInteractionCircle npcCircle = activeNpc.GetComponent<NpcInteractionCircle>();
             if (npcCircle != null)
                 npcCircle.SetCallActive(false);
+
+            if (activeNpc.CompareTag("CoffeeNPC"))
+            {
+                CoffeeNpc coffeeNpc = activeNpc.GetComponent<CoffeeNpc>();
+                if (coffeeNpc != null)
+                    coffeeNpc.CompleteInteraction(GetComponent<PlayerCoffeeInventory>());
+            }
+
             activeNpc.tag = "NPC";
         }
 

@@ -25,13 +25,17 @@ public static class NpcInteractionCircleSetup
             return;
 
         bool changed = false;
-        foreach (GameObject npc in GameObject.FindGameObjectsWithTag("InteractiveNPC"))
+        string[] callableTags = { "InteractiveNPC", "CoffeeNPC" };
+        foreach (string callableTag in callableTags)
         {
-            if (npc.GetComponent<NpcInteractionCircle>() != null)
-                continue;
+            foreach (GameObject npc in GameObject.FindGameObjectsWithTag(callableTag))
+            {
+                if (npc.GetComponent<NpcInteractionCircle>() != null)
+                    continue;
 
-            Undo.AddComponent<NpcInteractionCircle>(npc);
-            changed = true;
+                Undo.AddComponent<NpcInteractionCircle>(npc);
+                changed = true;
+            }
         }
 
         if (!changed)
