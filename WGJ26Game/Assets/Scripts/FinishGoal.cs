@@ -37,7 +37,9 @@ public sealed class FinishGoal : MonoBehaviour
         float interactionRadius = interactionCircle.NpcInteractionRadius;
         float remainingDistance = Mathf.Max(0f, difference.magnitude - interactionRadius);
         if (distanceText != null)
-            distanceText.text = $"Meta: {remainingDistance / displayedDistanceDivisor:0.0} m";
+            distanceText.text = string.Format(
+                GameLocalization.Get("game.goal"),
+                remainingDistance / displayedDistanceDivisor);
 
         if (remainingDistance > 0f)
             return;

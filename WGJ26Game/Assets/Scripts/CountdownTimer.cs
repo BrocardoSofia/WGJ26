@@ -60,7 +60,7 @@ public sealed class CountdownTimer : MonoBehaviour
         int displayedSeconds = Mathf.CeilToInt(remainingSeconds);
         int minutes = displayedSeconds / 60;
         int seconds = displayedSeconds % 60;
-        timerText.text = $"Tiempo: {minutes:00}:{seconds:00}";
+        timerText.text = string.Format(GameLocalization.Get("game.time"), minutes, seconds);
     }
 
     private void OnValidate()

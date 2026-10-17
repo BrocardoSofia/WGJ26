@@ -49,6 +49,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
             openWindowsSettingsButton.onClick.AddListener(OpenWindowsMicrophoneSettings);
         if (voiceControlToggle != null)
         {
+            voiceControlToggle.SetIsOnWithoutNotify(GameSettings.UseVoiceControl);
             voiceControlToggle.onValueChanged.AddListener(SetVoiceControl);
             useVoiceControl = voiceControlToggle.isOn;
         }
@@ -80,6 +81,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
     {
         StopAllCoroutines();
         useVoiceControl = enabled;
+        GameSettings.UseVoiceControl = enabled;
 
         if (useVoiceControl)
             StartListening();
@@ -105,10 +107,10 @@ public sealed class VoiceNoDetector : MonoBehaviour
         catch (Exception exception)
         {
             Debug.LogError($"No se pudo iniciar el detector de 'No': {exception.Message}");
-            SetStatus("No se pudo iniciar Windows Speech.");
+            SetStatus(GameLocalization.Get("voice.startError"));
         }
 #else
-        SetStatus("Reconocimiento disponible solamente en Windows.");
+        SetStatus(GameLocalization.Get("voice.unavailable"));
 #endif
     }
 
@@ -142,7 +144,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private void ShowDefaultMicrophoneMessage()
     {
-        SetStatus("Micrófono: entrada predeterminada de Windows");
+        SetStatus(GameLocalization.Get("voice.defaultMicrophone"));
     }
 
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
@@ -201,10 +203,12 @@ public sealed class VoiceNoDetector : MonoBehaviour
             NoDetected?.Invoke();
         }
 
-        string detection = count == 1 ? "Detectado: No" : $"Detectados: {count} × No";
+        string detection = count == 1
+            ? GameLocalization.Get("voice.detectedOne")
+            : string.Format(GameLocalization.Get("voice.detectedMany"), count);
         SetStatus(useVoiceControl
-            ? $"Micrófono: predeterminado de Windows | {detection}"
-            : $"Micrófono: predeterminado de Windows (pausado) | {detection}");
+            ? $"{GameLocalization.Get("voice.defaultMicrophone")} | {detection}"
+            : $"{GameLocalization.Get("voice.pausedMicrophone")} | {detection}");
     }
 
     private void UpdateModeStatus()
@@ -212,7 +216,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
         if (useVoiceControl)
             ShowDefaultMicrophoneMessage();
         else
-            SetStatus("Micrófono: predeterminado de Windows (pausado)");
+            SetStatus(GameLocalization.Get("voice.pausedMicrophone"));
 
         UpdateToggleVisual();
     }
@@ -225,7 +229,9 @@ public sealed class VoiceNoDetector : MonoBehaviour
         Text label = voiceControlToggle.GetComponentInChildren<Text>(true);
         if (label != null)
         {
-            label.text = useVoiceControl ? "MODO VOZ" : "MODO TECLADO";
+            label.text = useVoiceControl
+                ? GameLocalization.Get("voice.modeVoice")
+                : GameLocalization.Get("voice.modeKeyboard");
             label.color = Color.white;
         }
 

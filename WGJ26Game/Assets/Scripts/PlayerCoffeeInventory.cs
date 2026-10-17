@@ -68,7 +68,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
         RefreshCounter();
         if (coffeeCount >= coffeesForGameOver)
-            TriggerGameOver("GAME OVER\nPor sobredosis de café");
+            TriggerGameOver(GameLocalization.Get("game.coffeeOver"));
         else if (!gameOver && gameOverPanel != null)
             gameOverPanel.SetActive(false);
         if (victoryPanel != null)
@@ -109,7 +109,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         {
             if (coffeeRemainingTimes.Count >= GetCoffeeCapacity())
             {
-                TriggerGameOver("GAME OVER\nPor sobredosis de café");
+                TriggerGameOver(GameLocalization.Get("game.coffeeOver"));
                 return;
             }
 
@@ -210,7 +210,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
     public void TimeExpiredGameOver()
     {
-        TriggerGameOver("GAME OVER\nNo llegaste a tiempo al trabajo");
+        TriggerGameOver(GameLocalization.Get("game.timeOver"));
     }
 
     public void Retry()
