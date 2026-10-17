@@ -8,8 +8,8 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     [SerializeField, Min(0), InspectorName("Cafés")]
     private int coffeeCount;
 
-    [SerializeField, InspectorName("Texto contador de cafés")]
-    private Text coffeeCountText;
+    [SerializeField, InspectorName("Espacios visuales de café")]
+    private Image[] coffeeIcons;
 
     [SerializeField, Min(0f), InspectorName("Aumento de velocidad por café")]
     private float speedIncreasePerCoffee = 2f;
@@ -102,8 +102,14 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
     private void RefreshCounter()
     {
-        if (coffeeCountText != null)
-            coffeeCountText.text = $"Cafés: {coffeeCount}";
+        if (coffeeIcons == null)
+            return;
+
+        for (int index = 0; index < coffeeIcons.Length; index++)
+        {
+            if (coffeeIcons[index] != null)
+                coffeeIcons[index].color = index < coffeeCount ? Color.white : Color.black;
+        }
     }
 
     private void TriggerGameOver(string message)
