@@ -1,10 +1,17 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public sealed class FinishGoal : MonoBehaviour
 {
     [SerializeField, InspectorName("Estado del jugador")]
     private PlayerCoffeeInventory playerGameState;
+
+    [SerializeField, InspectorName("Texto de distancia a la meta")]
+    private Text distanceText;
+
+    [SerializeField, Min(0.01f), InspectorName("Divisor de distancia mostrada")]
+    private float displayedDistanceDivisor = 5f;
 
     private bool reached;
 
@@ -28,11 +35,20 @@ public sealed class FinishGoal : MonoBehaviour
         difference.y = 0f;
 
         float interactionRadius = interactionCircle.NpcInteractionRadius;
-        if (difference.sqrMagnitude > interactionRadius * interactionRadius)
+        float remainingDistance = Mathf.Max(0f, difference.magnitude - interactionRadius);
+        if (distanceText != null)
+            distanceText.text = $"Meta: {remainingDistance / displayedDistanceDivisor:0.0} m";
+
+        if (remainingDistance > 0f)
             return;
 
         reached = true;
         playerGameState.WinGame();
+    }
+
+    private void OnValidate()
+    {
+        displayedDistanceDivisor = Mathf.Max(0.01f, displayedDistanceDivisor);
     }
 
 #if UNITY_EDITOR
