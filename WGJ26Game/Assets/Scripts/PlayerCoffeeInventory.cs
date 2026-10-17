@@ -86,6 +86,20 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
             playerMovement.Speed += speedIncreasePerCoffee * amount;
     }
 
+    public void ConsumeCoffee()
+    {
+        if (coffeeCount <= 0 || gameOver)
+            return;
+
+        coffeeCount--;
+        RefreshCounter();
+
+        if (playerMovement == null)
+            playerMovement = GetComponent<ConstantPlaneMover>();
+        if (playerMovement != null)
+            playerMovement.Speed = Mathf.Max(0f, playerMovement.Speed - speedIncreasePerCoffee);
+    }
+
     private void RefreshCounter()
     {
         if (coffeeCountText != null)

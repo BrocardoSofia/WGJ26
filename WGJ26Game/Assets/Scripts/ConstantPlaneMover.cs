@@ -565,6 +565,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
                 if (coffeeNpc != null)
                     coffeeNpc.CompleteInteraction(GetComponent<PlayerCoffeeInventory>());
             }
+            else if (activeNpc.CompareTag("InteractiveNPC"))
+            {
+                PlayerCoffeeInventory coffeeInventory = GetComponent<PlayerCoffeeInventory>();
+                if (coffeeInventory != null)
+                    coffeeInventory.ConsumeCoffee();
+            }
 
             activeNpc.tag = "NPC";
         }
