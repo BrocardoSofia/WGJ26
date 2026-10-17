@@ -281,7 +281,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void OnNoDetected()
     {
-        if (RejectActiveCoffeeNpc())
+        if (RejectCoffeeNpcsInsideCallRange())
             return;
 
         if (movementState != MovementState.ApproachingNpc)
@@ -290,22 +290,35 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         noCorrectionTimer = noCorrectionDuration;
     }
 
-    private bool RejectActiveCoffeeNpc()
+    private bool RejectCoffeeNpcsInsideCallRange()
     {
-        if (movementState != MovementState.ApproachingNpc || activeNpc == null ||
-            !activeNpc.CompareTag("CoffeeNPC") || !IsInsideNpcCallRange(activeNpc))
+        if (interactionRanges == null)
             return false;
 
-        Transform rejectedNpc = activeNpc;
-        waitingNpcs.Remove(rejectedNpc);
-        NpcInteractionCircle npcCircle = rejectedNpc.GetComponent<NpcInteractionCircle>();
-        if (npcCircle != null)
-            npcCircle.SetCallActive(false);
+        bool rejectedAnyCoffeeNpc = false;
+        bool rejectedActiveNpc = false;
+        foreach (GameObject npcObject in GameObject.FindGameObjectsWithTag("CoffeeNPC"))
+        {
+            Transform coffeeNpc = npcObject.transform;
+            if (!IsInsideNpcCallRange(coffeeNpc))
+                continue;
 
-        rejectedNpc.tag = "NPC";
-        CoffeeNpc coffeeBehaviour = rejectedNpc.GetComponent<CoffeeNpc>();
-        if (coffeeBehaviour != null)
-            coffeeBehaviour.Reject();
+            rejectedAnyCoffeeNpc = true;
+            rejectedActiveNpc |= activeNpc == coffeeNpc;
+            waitingNpcs.Remove(coffeeNpc);
+
+            NpcInteractionCircle npcCircle = coffeeNpc.GetComponent<NpcInteractionCircle>();
+            if (npcCircle != null)
+                npcCircle.SetCallActive(false);
+
+            coffeeNpc.tag = "NPC";
+            CoffeeNpc coffeeBehaviour = coffeeNpc.GetComponent<CoffeeNpc>();
+            if (coffeeBehaviour != null)
+                coffeeBehaviour.Reject();
+        }
+
+        if (!rejectedActiveNpc)
+            return rejectedAnyCoffeeNpc;
 
         activeNpc = null;
         noCorrectionTimer = 0f;
