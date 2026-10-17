@@ -101,6 +101,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
         if (movementState == MovementState.ReturningToOriginalZ)
         {
+            if (TryStartNpcApproach())
+            {
+                ApproachActiveNpc();
+                return;
+            }
+
             ReturnToOriginalZ();
             return;
         }
@@ -387,7 +393,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             float proximity = callRadius > interactionRadius
                 ? Mathf.InverseLerp(callRadius, interactionRadius, edgeDistance)
                 : 1f;
-            alpha = npcCallIndicatorMaxAlpha * proximity;
+            float earlyVisibleProximity = Mathf.Sqrt(proximity);
+            alpha = npcCallIndicatorMaxAlpha * earlyVisibleProximity;
         }
 
         SetNpcCallIndicatorAlpha(alpha);
