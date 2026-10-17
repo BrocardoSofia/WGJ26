@@ -254,7 +254,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d37a9ece6a545445b2047573e4af3d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConstantPlaneMover
-  speed: 5
+  speed: 0
   direction: {x: 1, y: 0, z: 0}
   wrapAtLimits: 1
   xLimits: {x: -150, y: 150}

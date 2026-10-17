@@ -14,6 +14,15 @@ using UnityEngine.Windows.Speech;
 /// </summary>
 public sealed class VoiceNoDetector : MonoBehaviour
 {
+    private static readonly string[] NoPhrases =
+    {
+        "no",
+        "no no",
+        "no no no",
+        "no no no no",
+        "no no no no no"
+    };
+
     [SerializeField] private Text statusText;
     [SerializeField] private Button openWindowsSettingsButton;
     [SerializeField] private bool startListeningOnEnable = true;
@@ -47,7 +56,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
         try
         {
-            recognizer = new KeywordRecognizer(new[] { "no" }, ConfidenceLevel.Low);
+            recognizer = new KeywordRecognizer(NoPhrases, ConfidenceLevel.Low);
             recognizer.OnPhraseRecognized += OnPhraseRecognized;
             recognizer.Start();
             Debug.Log("Detector de 'No' activo. Usa el micrófono de entrada predeterminado de Windows.");
@@ -98,11 +107,33 @@ public sealed class VoiceNoDetector : MonoBehaviour
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     private void OnPhraseRecognized(PhraseRecognizedEventArgs args)
     {
-        if (!string.Equals(args.text.Trim(), "no", StringComparison.OrdinalIgnoreCase))
+        int detectedCount = CountNoWords(args.text);
+        if (detectedCount == 0)
             return;
 
-        Debug.Log("No");
-        SetStatus("Detectado: No");
+        for (int index = 0; index < detectedCount; index++)
+            Debug.Log("No");
+
+        SetStatus(detectedCount == 1
+            ? "Detectado: No"
+            : $"Detectados: {detectedCount} × No");
+    }
+
+    private static int CountNoWords(string phrase)
+    {
+        if (string.IsNullOrWhiteSpace(phrase))
+            return 0;
+
+        int count = 0;
+        string[] words = phrase.Split(new[] { ' ', ',', '.', ';', ':', '!', '?' },
+            StringSplitOptions.RemoveEmptyEntries);
+        foreach (string word in words)
+        {
+            if (string.Equals(word, "no", StringComparison.OrdinalIgnoreCase))
+                count++;
+        }
+
+        return count;
     }
 #endif
 
