@@ -19,8 +19,9 @@ public static class NivelSceneSetup
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 return;
 
-            bool alreadyConfigured = File.Exists(ScenePath)
-                && File.ReadAllText(ScenePath).Contains("m_Name: Personaje_Placeholder");
+            string sceneText = File.Exists(ScenePath) ? File.ReadAllText(ScenePath) : string.Empty;
+            bool alreadyConfigured = sceneText.Contains("m_Name: Player")
+                || sceneText.Contains("m_Name: Personaje_Placeholder");
             if (!alreadyConfigured)
                 ConfigureScene();
         };
