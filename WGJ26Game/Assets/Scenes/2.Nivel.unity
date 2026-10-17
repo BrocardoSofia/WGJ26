@@ -4876,7 +4876,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownTimer
   initialMinutes: 2
-  initialSeconds: 0
+  initialSeconds: 15
   timerText: {fileID: 2205000005}
   playerGameState: {fileID: 254466915}
 --- !u!1 &2300000000

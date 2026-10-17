@@ -210,6 +210,13 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             if (isInsideCallRange)
                 activeNpcCirclesThisFrame.Add(npcCircle);
 
+            if (npc.CompareTag("CoffeeNPC"))
+            {
+                CoffeeNpc coffeeBehaviour = npc.GetComponent<CoffeeNpc>();
+                if (coffeeBehaviour != null)
+                    coffeeBehaviour.SetInsidePlayerCallRange(isInsideCallRange);
+            }
+
             if (npc == activeNpc || waitingNpcs.Contains(npc))
                 continue;
 
@@ -329,6 +336,10 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             if (!IsInsideNpcCallRange(coffeeNpc))
                 continue;
 
+            CoffeeNpc coffeeBehaviour = coffeeNpc.GetComponent<CoffeeNpc>();
+            if (coffeeBehaviour == null || !coffeeBehaviour.CanHearRejection)
+                continue;
+
             rejectedAnyCoffeeNpc = true;
             rejectedActiveNpc |= activeNpc == coffeeNpc;
             waitingNpcs.Remove(coffeeNpc);
@@ -338,9 +349,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
                 npcCircle.SetCallActive(false);
 
             coffeeNpc.tag = "NPC";
-            CoffeeNpc coffeeBehaviour = coffeeNpc.GetComponent<CoffeeNpc>();
-            if (coffeeBehaviour != null)
-                coffeeBehaviour.Reject();
+            coffeeBehaviour.Reject();
         }
 
         if (!rejectedActiveNpc)

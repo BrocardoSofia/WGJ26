@@ -12,7 +12,25 @@ public sealed class CoffeeNpc : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Velocidad al retirarse")]
     private float rejectionMoveSpeed = 1f;
 
+    [SerializeField, Min(0f), InspectorName("Espera antes de escuchar No")]
+    private float rejectionListeningDelay = 1f;
+
     private bool movingToRejectionDestination;
+    private bool insidePlayerCallRange;
+    private float enteredCallRangeTime;
+
+    public bool CanHearRejection =>
+        insidePlayerCallRange && Time.time >= enteredCallRangeTime + rejectionListeningDelay;
+
+    public void SetInsidePlayerCallRange(bool inside)
+    {
+        if (inside == insidePlayerCallRange)
+            return;
+
+        insidePlayerCallRange = inside;
+        if (inside)
+            enteredCallRangeTime = Time.time;
+    }
 
     public void CompleteInteraction(PlayerCoffeeInventory inventory)
     {
@@ -43,5 +61,6 @@ public sealed class CoffeeNpc : MonoBehaviour
     {
         coffeeAmount = Mathf.Max(0, coffeeAmount);
         rejectionMoveSpeed = Mathf.Max(0f, rejectionMoveSpeed);
+        rejectionListeningDelay = Mathf.Max(0f, rejectionListeningDelay);
     }
 }
