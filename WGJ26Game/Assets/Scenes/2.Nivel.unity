@@ -237,7 +237,7 @@ GameObject:
   - component: {fileID: 254466908}
   - component: {fileID: 254466913}
   m_Layer: 0
-  m_Name: Personaje_Placeholder
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -255,7 +255,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d37a9ece6a545445b2047573e4af3d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConstantPlaneMover
-  speed: 0
+  speed: 1
   direction: {x: 1, y: 0, z: 0}
   wrapAtLimits: 1
   xLimits: {x: -150, y: 150}
@@ -694,7 +694,7 @@ GameObject:
   - component: {fileID: 416440490}
   - component: {fileID: 416440489}
   m_Layer: 0
-  m_Name: Piso_310x310
+  m_Name: Piso
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -788,8 +788,8 @@ Transform:
   m_GameObject: {fileID: 416440488}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 31, y: 1, z: 31}
+  m_LocalPosition: {x: 130, y: 0, z: 4.2141}
+  m_LocalScale: {x: 31, y: 1, z: 2.399392}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
