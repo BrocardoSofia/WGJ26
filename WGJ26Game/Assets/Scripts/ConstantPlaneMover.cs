@@ -33,11 +33,14 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     [Header("Resistencia al NPC")]
     [SerializeField, Min(0f)] private float noCorrectionDuration = 0.45f;
     [SerializeField, Range(0f, 1f)] private float noCorrectionStrength = 0.75f;
+    [SerializeField, Min(0f), InspectorName("Aumento de atracción por café")]
+    private float npcAttractionIncreasePerCoffee = 0.25f;
 
     [Header("Indicador de llamada NPC")]
     [SerializeField, Range(0f, 1f)] private float npcCallIndicatorMaxAlpha = 0.65f;
 
     private PlayerSceneCircle interactionRanges;
+    private PlayerCoffeeInventory coffeeInventory;
     private Transform activeNpc;
     private MovementState movementState;
     private float originalZ;
@@ -60,6 +63,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private void Start()
     {
         interactionRanges = GetComponent<PlayerSceneCircle>();
+        coffeeInventory = GetComponent<PlayerCoffeeInventory>();
         originalZ = transform.position.z;
         CreateNpcCallIndicator();
     }
@@ -299,7 +303,17 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (movementState != MovementState.ApproachingNpc)
             return;
 
-        noCorrectionTimer = noCorrectionDuration;
+        noCorrectionTimer = GetEffectiveNoCorrectionDuration();
+    }
+
+    private float GetEffectiveNoCorrectionDuration()
+    {
+        if (coffeeInventory == null)
+            coffeeInventory = GetComponent<PlayerCoffeeInventory>();
+
+        int activeCoffees = coffeeInventory != null ? coffeeInventory.CoffeeCount : 0;
+        float attractionMultiplier = 1f + activeCoffees * npcAttractionIncreasePerCoffee;
+        return noCorrectionDuration / attractionMultiplier;
     }
 
     private bool RejectCoffeeNpcsInsideCallRange()
@@ -631,6 +645,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         speed = Mathf.Max(0f, speed);
         noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
+        npcAttractionIncreasePerCoffee = Mathf.Max(0f, npcAttractionIncreasePerCoffee);
         npcCallIndicatorMaxAlpha = Mathf.Clamp01(npcCallIndicatorMaxAlpha);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);

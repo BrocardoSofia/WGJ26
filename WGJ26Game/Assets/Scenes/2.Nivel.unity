@@ -348,6 +348,7 @@ MonoBehaviour:
   zLimits: {x: -150, y: 150}
   noCorrectionDuration: 0.45
   noCorrectionStrength: 0.75
+  npcAttractionIncreasePerCoffee: 0.25
   npcCallIndicatorMaxAlpha: 0.35
 --- !u!23 &254466909
 MeshRenderer:
