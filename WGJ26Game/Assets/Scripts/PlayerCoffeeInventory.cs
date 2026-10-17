@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,6 +11,9 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
     [SerializeField, InspectorName("Espacios visuales de café")]
     private Image[] coffeeIcons;
+
+    [SerializeField, Min(0.1f), InspectorName("Duración de cada café (segundos)")]
+    private float coffeeDurationSeconds = 10f;
 
     [SerializeField, Min(0f), InspectorName("Aumento de velocidad por café")]
     private float speedIncreasePerCoffee = 2f;
@@ -39,6 +43,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     private Button playAgainButton;
 
     private ConstantPlaneMover playerMovement;
+    private readonly List<float> coffeeRemainingTimes = new();
     private bool gameOver;
 
     public int CoffeeCount => coffeeCount;
@@ -46,6 +51,12 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     private void Awake()
     {
         playerMovement = GetComponent<ConstantPlaneMover>();
+        int initialCoffeeCount = Mathf.Min(coffeeCount, GetCoffeeCapacity());
+        coffeeRemainingTimes.Clear();
+        for (int index = 0; index < initialCoffeeCount; index++)
+            coffeeRemainingTimes.Add(coffeeDurationSeconds);
+        coffeeCount = coffeeRemainingTimes.Count;
+
         if (retryButton != null)
             retryButton.onClick.AddListener(Retry);
         if (returnToMenuButton != null)
@@ -64,40 +75,89 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
             victoryPanel.SetActive(false);
     }
 
+    private void Update()
+    {
+        if (gameOver || coffeeRemainingTimes.Count == 0)
+            return;
+
+        float elapsedTime = Time.deltaTime;
+        while (elapsedTime > 0f && coffeeRemainingTimes.Count > 0)
+        {
+            int oldestCoffeeIndex = coffeeRemainingTimes.Count - 1;
+            float oldestRemainingTime = coffeeRemainingTimes[oldestCoffeeIndex];
+            if (oldestRemainingTime > elapsedTime)
+            {
+                coffeeRemainingTimes[oldestCoffeeIndex] = oldestRemainingTime - elapsedTime;
+                elapsedTime = 0f;
+            }
+            else
+            {
+                elapsedTime -= oldestRemainingTime;
+                RemoveOldestCoffee();
+            }
+        }
+
+        RefreshCounter();
+    }
+
     public void AddCoffee(int amount)
     {
         if (amount <= 0 || gameOver)
             return;
 
-        if (coffeeCount + amount >= coffeesForGameOver)
+        for (int index = 0; index < amount; index++)
         {
-            coffeeCount = coffeesForGameOver - 1;
-            RefreshCounter();
-            TriggerGameOver("GAME OVER\nPor sobredosis de café");
-            return;
+            if (coffeeRemainingTimes.Count >= GetCoffeeCapacity())
+            {
+                TriggerGameOver("GAME OVER\nPor sobredosis de café");
+                return;
+            }
+
+            coffeeRemainingTimes.Insert(0, coffeeDurationSeconds);
+            IncreaseSpeedForOneCoffee();
         }
 
-        coffeeCount += amount;
+        coffeeCount = coffeeRemainingTimes.Count;
         RefreshCounter();
-
-        if (playerMovement == null)
-            playerMovement = GetComponent<ConstantPlaneMover>();
-        if (playerMovement != null)
-            playerMovement.Speed += speedIncreasePerCoffee * amount;
     }
 
     public void ConsumeCoffee()
     {
-        if (coffeeCount <= 0 || gameOver)
+        if (coffeeRemainingTimes.Count == 0 || gameOver)
             return;
 
-        coffeeCount--;
+        RemoveOldestCoffee();
         RefreshCounter();
+    }
+
+    private void IncreaseSpeedForOneCoffee()
+    {
+        if (playerMovement == null)
+            playerMovement = GetComponent<ConstantPlaneMover>();
+        if (playerMovement != null)
+            playerMovement.Speed += speedIncreasePerCoffee;
+    }
+
+    private void RemoveOldestCoffee()
+    {
+        if (coffeeRemainingTimes.Count == 0)
+            return;
+
+        coffeeRemainingTimes.RemoveAt(coffeeRemainingTimes.Count - 1);
+        coffeeCount = coffeeRemainingTimes.Count;
 
         if (playerMovement == null)
             playerMovement = GetComponent<ConstantPlaneMover>();
         if (playerMovement != null)
             playerMovement.Speed = Mathf.Max(0f, playerMovement.Speed - speedIncreasePerCoffee);
+    }
+
+    private int GetCoffeeCapacity()
+    {
+        int visualCapacity = coffeeIcons != null && coffeeIcons.Length > 0
+            ? coffeeIcons.Length
+            : coffeesForGameOver - 1;
+        return Mathf.Max(0, Mathf.Min(visualCapacity, coffeesForGameOver - 1));
     }
 
     private void RefreshCounter()
@@ -108,7 +168,29 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         for (int index = 0; index < coffeeIcons.Length; index++)
         {
             if (coffeeIcons[index] != null)
-                coffeeIcons[index].color = index < coffeeCount ? Color.white : Color.black;
+            {
+                coffeeIcons[index].color = Color.white;
+                float fillProgress;
+                if (index >= coffeeRemainingTimes.Count)
+                {
+                    fillProgress = 0f;
+                }
+                else if (index == coffeeRemainingTimes.Count - 1)
+                {
+                    fillProgress = Mathf.Clamp01(
+                        coffeeRemainingTimes[index] / coffeeDurationSeconds);
+                }
+                else
+                {
+                    fillProgress = 1f;
+                }
+
+                RectTransform fillRect = coffeeIcons[index].rectTransform;
+                fillRect.anchorMin = Vector2.zero;
+                fillRect.anchorMax = new Vector2(fillProgress, 1f);
+                fillRect.offsetMin = Vector2.zero;
+                fillRect.offsetMax = Vector2.zero;
+            }
         }
     }
 
@@ -179,6 +261,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     {
         coffeeCount = Mathf.Max(0, coffeeCount);
         speedIncreasePerCoffee = Mathf.Max(0f, speedIncreasePerCoffee);
+        coffeeDurationSeconds = Mathf.Max(0.1f, coffeeDurationSeconds);
         coffeesForGameOver = Mathf.Max(1, coffeesForGameOver);
     }
 }
