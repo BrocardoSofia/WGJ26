@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using DiagnosticsProcess = System.Diagnostics.Process;
 using DiagnosticsProcessStartInfo = System.Diagnostics.ProcessStartInfo;
@@ -25,7 +27,11 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     [SerializeField] private Text statusText;
     [SerializeField] private Button openWindowsSettingsButton;
+    [SerializeField] private Toggle voiceControlToggle;
     [SerializeField] private bool startListeningOnEnable = true;
+    [SerializeField, Min(0f)] private float inputDelaySeconds;
+
+    private bool useVoiceControl = true;
 
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     private KeywordRecognizer recognizer;
@@ -33,19 +39,51 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private void OnEnable()
     {
+        EnsureControlToggle();
+        MakeInformationTextReadable();
+
         if (openWindowsSettingsButton != null)
             openWindowsSettingsButton.onClick.AddListener(OpenWindowsMicrophoneSettings);
+        if (voiceControlToggle != null)
+        {
+            voiceControlToggle.onValueChanged.AddListener(SetVoiceControl);
+            useVoiceControl = voiceControlToggle.isOn;
+        }
 
-        ShowDefaultMicrophoneMessage();
-        if (startListeningOnEnable)
+        UpdateModeStatus();
+        if (startListeningOnEnable && useVoiceControl)
             StartListening();
+    }
+
+    private void Update()
+    {
+        if (useVoiceControl || Keyboard.current == null)
+            return;
+
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+            QueueNo(1);
     }
 
     private void OnDisable()
     {
         if (openWindowsSettingsButton != null)
             openWindowsSettingsButton.onClick.RemoveListener(OpenWindowsMicrophoneSettings);
+        if (voiceControlToggle != null)
+            voiceControlToggle.onValueChanged.RemoveListener(SetVoiceControl);
         StopListening();
+    }
+
+    public void SetVoiceControl(bool enabled)
+    {
+        StopAllCoroutines();
+        useVoiceControl = enabled;
+
+        if (useVoiceControl)
+            StartListening();
+        else
+            StopListening();
+
+        UpdateModeStatus();
     }
 
     public void StartListening()
@@ -107,16 +145,14 @@ public sealed class VoiceNoDetector : MonoBehaviour
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     private void OnPhraseRecognized(PhraseRecognizedEventArgs args)
     {
+        if (!useVoiceControl)
+            return;
+
         int detectedCount = CountNoWords(args.text);
         if (detectedCount == 0)
             return;
 
-        for (int index = 0; index < detectedCount; index++)
-            Debug.Log("No");
-
-        SetStatus(detectedCount == 1
-            ? "Detectado: No"
-            : $"Detectados: {detectedCount} × No");
+        QueueNo(detectedCount);
     }
 
     private static int CountNoWords(string phrase)
@@ -136,6 +172,120 @@ public sealed class VoiceNoDetector : MonoBehaviour
         return count;
     }
 #endif
+
+    private void QueueNo(int count)
+    {
+        if (inputDelaySeconds <= 0f)
+        {
+            LogNo(count);
+            return;
+        }
+
+        StartCoroutine(LogNoAfterDelay(count));
+    }
+
+    private IEnumerator LogNoAfterDelay(int count)
+    {
+        yield return new WaitForSecondsRealtime(inputDelaySeconds);
+        LogNo(count);
+    }
+
+    private void LogNo(int count)
+    {
+        for (int index = 0; index < count; index++)
+            Debug.Log("No");
+
+        string detection = count == 1 ? "Detectado: No" : $"Detectados: {count} × No";
+        SetStatus(useVoiceControl
+            ? $"Micrófono: predeterminado de Windows | {detection}"
+            : $"Micrófono: predeterminado de Windows (pausado) | {detection}");
+    }
+
+    private void UpdateModeStatus()
+    {
+        if (useVoiceControl)
+            ShowDefaultMicrophoneMessage();
+        else
+            SetStatus("Micrófono: predeterminado de Windows (pausado)");
+
+        UpdateToggleVisual();
+    }
+
+    private void UpdateToggleVisual()
+    {
+        if (voiceControlToggle == null)
+            return;
+
+        Text label = voiceControlToggle.GetComponentInChildren<Text>(true);
+        if (label != null)
+        {
+            label.text = useVoiceControl ? "MODO VOZ" : "MODO TECLADO";
+            label.color = Color.white;
+        }
+
+        Color modeColor = useVoiceControl
+            ? new Color(0.12f, 0.55f, 0.22f, 1f)
+            : new Color(0.18f, 0.38f, 0.75f, 1f);
+        ColorBlock colors = voiceControlToggle.colors;
+        colors.normalColor = modeColor;
+        colors.highlightedColor = modeColor * 1.15f;
+        colors.selectedColor = modeColor;
+        colors.pressedColor = modeColor * 0.8f;
+        colors.disabledColor = new Color(modeColor.r, modeColor.g, modeColor.b, 0.5f);
+        voiceControlToggle.colors = colors;
+
+        if (voiceControlToggle.targetGraphic != null)
+            voiceControlToggle.targetGraphic.color = modeColor;
+    }
+
+    private void EnsureControlToggle()
+    {
+        if (voiceControlToggle != null || statusText == null)
+            return;
+
+        Transform panel = statusText.transform.parent;
+        Transform existingToggle = panel.Find("ControlModeToggle");
+        if (existingToggle != null)
+        {
+            voiceControlToggle = existingToggle.GetComponent<Toggle>();
+            return;
+        }
+
+        GameObject toggleObject = DefaultControls.CreateToggle(new DefaultControls.Resources());
+        toggleObject.name = "ControlModeToggle";
+        toggleObject.transform.SetParent(panel, false);
+
+        RectTransform toggleRect = toggleObject.GetComponent<RectTransform>();
+        toggleRect.anchorMin = new Vector2(0f, 1f);
+        toggleRect.anchorMax = new Vector2(0f, 1f);
+        toggleRect.pivot = new Vector2(0f, 1f);
+        toggleRect.anchoredPosition = new Vector2(15f, -135f);
+        toggleRect.sizeDelta = new Vector2(440f, 35f);
+
+        voiceControlToggle = toggleObject.GetComponent<Toggle>();
+        voiceControlToggle.isOn = true;
+
+        Text label = toggleObject.GetComponentInChildren<Text>();
+        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        label.fontSize = 17;
+        label.color = Color.white;
+
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        if (panelRect != null)
+            panelRect.sizeDelta = new Vector2(panelRect.sizeDelta.x, 205f);
+    }
+
+    private void MakeInformationTextReadable()
+    {
+        if (statusText == null)
+            return;
+
+        statusText.color = Color.white;
+        Transform title = statusText.transform.parent.Find("Title");
+        Text titleText = title != null ? title.GetComponent<Text>() : null;
+        if (titleText != null)
+            titleText.color = Color.white;
+    }
 
     private void SetStatus(string message)
     {
