@@ -461,7 +461,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 075d1f5bc9fb5e14ab3244fd9f4afbc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSceneCircle
-  npcCallDiameter: 16
+  npcCallDiameter: 31.1
   npcInteractionDiameter: 8
 --- !u!1 &330585543
 GameObject:
