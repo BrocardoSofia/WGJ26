@@ -1,7 +1,10 @@
+using System;
 using UnityEngine;
 
 public static class GameSettings
 {
+    public static event Action SettingsChanged;
+
     private const string VoiceControlKey = "settings.voiceControl";
     private const string MusicVolumeKey = "settings.musicVolume";
     private const string EffectsVolumeKey = "settings.effectsVolume";
@@ -53,11 +56,13 @@ public static class GameSettings
     {
         PlayerPrefs.SetInt(key, value);
         PlayerPrefs.Save();
+        SettingsChanged?.Invoke();
     }
 
     private static void SaveFloat(string key, float value)
     {
         PlayerPrefs.SetFloat(key, value);
         PlayerPrefs.Save();
+        SettingsChanged?.Invoke();
     }
 }

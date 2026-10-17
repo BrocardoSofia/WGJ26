@@ -42,6 +42,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private void OnEnable()
     {
+        GameSettings.SettingsChanged += ApplySavedControlMode;
         EnsureControlToggle();
         MakeInformationTextReadable();
 
@@ -70,11 +71,30 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private void OnDisable()
     {
+        GameSettings.SettingsChanged -= ApplySavedControlMode;
         if (openWindowsSettingsButton != null)
             openWindowsSettingsButton.onClick.RemoveListener(OpenWindowsMicrophoneSettings);
         if (voiceControlToggle != null)
             voiceControlToggle.onValueChanged.RemoveListener(SetVoiceControl);
         StopListening();
+    }
+
+    private void ApplySavedControlMode()
+    {
+        bool savedVoiceControl = GameSettings.UseVoiceControl;
+        if (savedVoiceControl == useVoiceControl)
+            return;
+
+        if (voiceControlToggle != null)
+            voiceControlToggle.SetIsOnWithoutNotify(savedVoiceControl);
+
+        StopAllCoroutines();
+        useVoiceControl = savedVoiceControl;
+        if (useVoiceControl)
+            StartListening();
+        else
+            StopListening();
+        UpdateModeStatus();
     }
 
     public void SetVoiceControl(bool enabled)

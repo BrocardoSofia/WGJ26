@@ -21,6 +21,8 @@ public sealed class MenuSettingsPanel : MonoBehaviour
     private Toggle fullscreenToggle;
     private Dropdown resolutionDropdown;
     private Dropdown languageDropdown;
+    private Slider musicSlider;
+    private Slider effectsSlider;
 
     public bool IsOpen => panel != null && panel.activeSelf;
 
@@ -32,6 +34,7 @@ public sealed class MenuSettingsPanel : MonoBehaviour
 
     public void Open()
     {
+        RefreshSavedValues();
         RefreshMicrophoneName();
         RefreshLocalizedTexts();
         panel.SetActive(true);
@@ -41,7 +44,10 @@ public sealed class MenuSettingsPanel : MonoBehaviour
     public void Close()
     {
         if (panel != null)
+        {
+            SaveCurrentValues();
             panel.SetActive(false);
+        }
     }
 
     private void BuildPanel()
@@ -91,13 +97,13 @@ public sealed class MenuSettingsPanel : MonoBehaviour
 
         CreateText("MusicLabel", panelRect, GameLocalization.Get("settings.music"), new Vector2(0f, 75f),
             new Vector2(820f, 35f), 22);
-        Slider musicSlider = CreateSlider("MusicVolume", panelRect, new Vector2(0f, 35f));
+        musicSlider = CreateSlider("MusicVolume", panelRect, new Vector2(0f, 35f));
         musicSlider.SetValueWithoutNotify(GameSettings.MusicVolume);
         musicSlider.onValueChanged.AddListener(value => GameSettings.MusicVolume = value);
 
         CreateText("EffectsLabel", panelRect, GameLocalization.Get("settings.effects"), new Vector2(0f, -35f),
             new Vector2(820f, 35f), 22);
-        Slider effectsSlider = CreateSlider("EffectsVolume", panelRect, new Vector2(0f, -75f));
+        effectsSlider = CreateSlider("EffectsVolume", panelRect, new Vector2(0f, -75f));
         effectsSlider.SetValueWithoutNotify(GameSettings.EffectsVolume);
         effectsSlider.onValueChanged.AddListener(value => GameSettings.EffectsVolume = value);
 
@@ -145,6 +151,37 @@ public sealed class MenuSettingsPanel : MonoBehaviour
         closeButton.onClick.AddListener(Close);
 
         panel.SetActive(false);
+    }
+
+    private void RefreshSavedValues()
+    {
+        bool useVoice = GameSettings.UseVoiceControl;
+        voiceToggle.SetIsOnWithoutNotify(useVoice);
+        keyboardToggle.SetIsOnWithoutNotify(!useVoice);
+        musicSlider.SetValueWithoutNotify(GameSettings.MusicVolume);
+        effectsSlider.SetValueWithoutNotify(GameSettings.EffectsVolume);
+
+        int resolutionIndex = GetSavedResolutionIndex();
+        resolutionDropdown.SetValueWithoutNotify(resolutionIndex);
+        resolutionDropdown.RefreshShownValue();
+        bool supportsFullscreen = resolutionIndex == resolutions.Length - 1;
+        fullscreenToggle.interactable = supportsFullscreen;
+        fullscreenToggle.SetIsOnWithoutNotify(supportsFullscreen && GameSettings.Fullscreen);
+
+        languageDropdown.SetValueWithoutNotify((int)GameLocalization.CurrentLanguage);
+        languageDropdown.RefreshShownValue();
+        UpdateControlVisuals();
+    }
+
+    private void SaveCurrentValues()
+    {
+        GameSettings.UseVoiceControl = voiceToggle.isOn;
+        GameSettings.MusicVolume = musicSlider.value;
+        GameSettings.EffectsVolume = effectsSlider.value;
+
+        Vector2Int resolution = resolutions[Mathf.Clamp(resolutionDropdown.value, 0, resolutions.Length - 1)];
+        GameSettings.SetDisplay(resolution.x, resolution.y, fullscreenToggle.isOn);
+        PlayerPrefs.Save();
     }
 
     private int GetSavedResolutionIndex()
