@@ -9,6 +9,8 @@ using UnityEngine;
 public sealed class ConstantPlaneMover : MonoBehaviour
 {
     private const float NpcWaitSeconds = 2f;
+    private const float IndicatorGroundOffset = 0.02f;
+    private const int IndicatorSegments = 64;
 
     private enum MovementState
     {
@@ -32,6 +34,9 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     [SerializeField, Min(0f)] private float noCorrectionDuration = 0.45f;
     [SerializeField, Range(0f, 1f)] private float noCorrectionStrength = 0.75f;
 
+    [Header("Indicador de llamada NPC")]
+    [SerializeField, Range(0f, 1f)] private float npcCallIndicatorMaxAlpha = 0.65f;
+
     private PlayerSceneCircle interactionRanges;
     private Transform activeNpc;
     private MovementState movementState;
@@ -40,6 +45,9 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private float npcInteractionSide;
     private float noCorrectionTimer;
     private readonly List<Transform> waitingNpcs = new();
+    private GameObject npcCallIndicator;
+    private Mesh npcCallIndicatorMesh;
+    private Material npcCallIndicatorMaterial;
 
     public float Speed
     {
@@ -51,6 +59,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         interactionRanges = GetComponent<PlayerSceneCircle>();
         originalZ = transform.position.z;
+        CreateNpcCallIndicator();
     }
 
     private void OnEnable()
@@ -62,6 +71,21 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         VoiceNoDetector.NoDetected -= OnNoDetected;
         VoiceNoDetector.InputBlocked = false;
+    }
+
+    private void OnDestroy()
+    {
+        if (npcCallIndicator != null)
+            Destroy(npcCallIndicator);
+        if (npcCallIndicatorMaterial != null)
+            Destroy(npcCallIndicatorMaterial);
+        if (npcCallIndicatorMesh != null)
+            Destroy(npcCallIndicatorMesh);
+    }
+
+    private void LateUpdate()
+    {
+        UpdateNpcCallIndicator();
     }
 
     private void Update()
@@ -305,6 +329,117 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         return horizontalDistanceAfterPassing >= interactionRanges.NpcInteractionDiameter;
     }
 
+    private void CreateNpcCallIndicator()
+    {
+        if (interactionRanges == null || npcCallIndicator != null)
+            return;
+
+        npcCallIndicator = new GameObject("NpcCallIndicator_Runtime");
+        npcCallIndicator.hideFlags = HideFlags.DontSave;
+
+        MeshFilter meshFilter = npcCallIndicator.AddComponent<MeshFilter>();
+        MeshRenderer meshRenderer = npcCallIndicator.AddComponent<MeshRenderer>();
+        meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        meshRenderer.receiveShadows = false;
+
+        npcCallIndicatorMesh = CreateDiscMesh();
+        meshFilter.sharedMesh = npcCallIndicatorMesh;
+
+        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+        if (shader == null)
+            shader = Shader.Find("Sprites/Default");
+        npcCallIndicatorMaterial = new Material(shader);
+        ConfigureTransparentMaterial(npcCallIndicatorMaterial);
+        meshRenderer.sharedMaterial = npcCallIndicatorMaterial;
+
+        float diameter = interactionRanges.NpcInteractionDiameter;
+        npcCallIndicator.transform.localScale = new Vector3(diameter, 1f, diameter);
+        SetNpcCallIndicatorAlpha(0f);
+    }
+
+    private void UpdateNpcCallIndicator()
+    {
+        if (npcCallIndicator == null || interactionRanges == null)
+            return;
+
+        float groundY = transform.position.y - transform.localScale.y * 0.5f + IndicatorGroundOffset;
+        npcCallIndicator.transform.SetPositionAndRotation(
+            new Vector3(transform.position.x, groundY, transform.position.z),
+            Quaternion.identity);
+
+        float diameter = interactionRanges.NpcInteractionDiameter;
+        npcCallIndicator.transform.localScale = new Vector3(diameter, 1f, diameter);
+
+        float alpha = 0f;
+        if (movementState == MovementState.ApproachingNpc &&
+            activeNpc != null && activeNpc.CompareTag("InteractiveNPC"))
+        {
+            float edgeDistance = Mathf.Sqrt(PlanarSqrDistanceToNpcEdge(activeNpc));
+            float callRadius = interactionRanges.NpcCallRadius;
+            float interactionRadius = interactionRanges.NpcInteractionRadius;
+            float proximity = callRadius > interactionRadius
+                ? Mathf.InverseLerp(callRadius, interactionRadius, edgeDistance)
+                : 1f;
+            alpha = npcCallIndicatorMaxAlpha * proximity;
+        }
+
+        SetNpcCallIndicatorAlpha(alpha);
+    }
+
+    private void SetNpcCallIndicatorAlpha(float alpha)
+    {
+        if (npcCallIndicatorMaterial == null)
+            return;
+
+        Color color = new(1f, 0f, 0f, Mathf.Clamp01(alpha));
+        if (npcCallIndicatorMaterial.HasProperty("_BaseColor"))
+            npcCallIndicatorMaterial.SetColor("_BaseColor", color);
+        if (npcCallIndicatorMaterial.HasProperty("_Color"))
+            npcCallIndicatorMaterial.SetColor("_Color", color);
+    }
+
+    private static Mesh CreateDiscMesh()
+    {
+        Vector3[] vertices = new Vector3[IndicatorSegments + 1];
+        int[] triangles = new int[IndicatorSegments * 3];
+        vertices[0] = Vector3.zero;
+
+        for (int index = 0; index < IndicatorSegments; index++)
+        {
+            float angle = index * Mathf.PI * 2f / IndicatorSegments;
+            vertices[index + 1] = new Vector3(Mathf.Cos(angle) * 0.5f, 0f, Mathf.Sin(angle) * 0.5f);
+
+            int triangleIndex = index * 3;
+            triangles[triangleIndex] = 0;
+            triangles[triangleIndex + 1] = index + 1;
+            triangles[triangleIndex + 2] = (index + 1) % IndicatorSegments + 1;
+        }
+
+        Mesh mesh = new() { name = "NPC Call Indicator Disc" };
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    private static void ConfigureTransparentMaterial(Material material)
+    {
+        if (material.HasProperty("_Surface"))
+            material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_SrcBlend"))
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        if (material.HasProperty("_DstBlend"))
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        if (material.HasProperty("_ZWrite"))
+            material.SetFloat("_ZWrite", 0f);
+        if (material.HasProperty("_Cull"))
+            material.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
+
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+    }
+
     private void UpdateNpcWait()
     {
         waitTimer -= Time.deltaTime;
@@ -370,6 +505,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         speed = Mathf.Max(0f, speed);
         noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
+        npcCallIndicatorMaxAlpha = Mathf.Clamp01(npcCallIndicatorMaxAlpha);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);
         if (zLimits.x > zLimits.y)
