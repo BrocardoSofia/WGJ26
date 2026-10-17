@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -38,6 +39,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private float waitTimer;
     private float npcInteractionSide;
     private float noCorrectionTimer;
+    private readonly List<Transform> waitingNpcs = new();
 
     public float Speed
     {
@@ -64,6 +66,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void Update()
     {
+        UpdateNpcCallQueue();
+
         if (movementState == MovementState.WaitingAtNpc)
         {
             UpdateNpcWait();
@@ -109,40 +113,73 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (interactionRanges == null || interactionRanges.NpcCallRadius <= 0f)
             return false;
 
-        GameObject[] interactiveNpcs = GameObject.FindGameObjectsWithTag("InteractiveNPC");
-        Transform nearestNpc = null;
-        float nearestSqrDistance = float.PositiveInfinity;
-        float callRadiusSqr = interactionRanges.NpcCallRadius * interactionRanges.NpcCallRadius;
-
-        foreach (GameObject npc in interactiveNpcs)
+        while (waitingNpcs.Count > 0)
         {
-            if (HasPassedNpcByInteractionDiameter(npc.transform))
+            Transform nextNpc = waitingNpcs[0];
+            waitingNpcs.RemoveAt(0);
+            if (nextNpc == null || !nextNpc.CompareTag("InteractiveNPC"))
+                continue;
+            if (!IsInsideNpcCallRange(nextNpc))
+                continue;
+
+            activeNpc = nextNpc;
+            movementState = MovementState.ApproachingNpc;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void UpdateNpcCallQueue()
+    {
+        if (interactionRanges == null)
+            return;
+
+        for (int index = waitingNpcs.Count - 1; index >= 0; index--)
+        {
+            Transform queuedNpc = waitingNpcs[index];
+            if (queuedNpc == null || !queuedNpc.CompareTag("InteractiveNPC") ||
+                !IsInsideNpcCallRange(queuedNpc))
+            {
+                waitingNpcs.RemoveAt(index);
+            }
+        }
+
+        List<Transform> newCalls = new();
+        foreach (GameObject npcObject in GameObject.FindGameObjectsWithTag("InteractiveNPC"))
+        {
+            Transform npc = npcObject.transform;
+            if (npc == activeNpc || waitingNpcs.Contains(npc))
+                continue;
+
+            if (HasPassedNpcByInteractionDiameter(npc))
             {
                 npc.tag = "NPC";
                 continue;
             }
 
-            float sqrDistance = PlanarSqrDistanceToNpcEdge(npc.transform);
-            if (sqrDistance <= callRadiusSqr && sqrDistance < nearestSqrDistance)
-            {
-                nearestNpc = npc.transform;
-                nearestSqrDistance = sqrDistance;
-            }
+            if (IsInsideNpcCallRange(npc))
+                newCalls.Add(npc);
         }
 
-        if (nearestNpc == null)
-            return false;
+        newCalls.Sort((first, second) =>
+            PlanarSqrDistanceToNpcEdge(first).CompareTo(PlanarSqrDistanceToNpcEdge(second)));
+        waitingNpcs.AddRange(newCalls);
+    }
 
-        activeNpc = nearestNpc;
-        movementState = MovementState.ApproachingNpc;
-        return true;
+    private bool IsInsideNpcCallRange(Transform npc)
+    {
+        float callRadius = interactionRanges.NpcCallRadius;
+        return PlanarSqrDistanceToNpcEdge(npc) <= callRadius * callRadius;
     }
 
     private void ApproachActiveNpc()
     {
         if (activeNpc == null || !activeNpc.CompareTag("InteractiveNPC"))
         {
-            movementState = MovementState.ReturningToOriginalZ;
+            activeNpc = null;
+            if (!TryStartNpcApproach())
+                movementState = MovementState.ReturningToOriginalZ;
             return;
         }
 
@@ -151,7 +188,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             activeNpc.tag = "NPC";
             activeNpc = null;
             noCorrectionTimer = 0f;
-            movementState = MovementState.ReturningToOriginalZ;
+            if (!TryStartNpcApproach())
+                movementState = MovementState.ReturningToOriginalZ;
             return;
         }
 
@@ -278,7 +316,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
         VoiceNoDetector.InputBlocked = false;
         activeNpc = null;
-        movementState = MovementState.ReturningToOriginalZ;
+        if (!TryStartNpcApproach())
+            movementState = MovementState.ReturningToOriginalZ;
     }
 
     private void ReturnToOriginalZ()
