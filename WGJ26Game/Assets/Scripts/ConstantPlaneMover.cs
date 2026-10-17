@@ -27,12 +27,17 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     [SerializeField] private Vector2 xLimits = new(-150f, 150f);
     [SerializeField] private Vector2 zLimits = new(-150f, 150f);
 
+    [Header("Resistencia al NPC")]
+    [SerializeField, Min(0f)] private float noCorrectionDuration = 0.45f;
+    [SerializeField, Range(0f, 1f)] private float noCorrectionStrength = 0.75f;
+
     private PlayerSceneCircle interactionRanges;
     private Transform activeNpc;
     private MovementState movementState;
     private float originalZ;
     private float waitTimer;
     private float npcInteractionSide;
+    private float noCorrectionTimer;
 
     public float Speed
     {
@@ -44,6 +49,17 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         interactionRanges = GetComponent<PlayerSceneCircle>();
         originalZ = transform.position.z;
+    }
+
+    private void OnEnable()
+    {
+        VoiceNoDetector.NoDetected += OnNoDetected;
+    }
+
+    private void OnDisable()
+    {
+        VoiceNoDetector.NoDetected -= OnNoDetected;
+        VoiceNoDetector.InputBlocked = false;
     }
 
     private void Update()
@@ -142,17 +158,45 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
 
         Vector3 targetPosition = new(activeNpc.position.x, transform.position.y, activeNpc.position.z);
-        transform.position = Vector3.MoveTowards(
-            transform.position,
-            targetPosition,
-            speed * Time.deltaTime);
+        if (noCorrectionTimer > 0f)
+        {
+            noCorrectionTimer -= Time.deltaTime;
+            Vector3 npcDirection = (targetPosition - transform.position).normalized;
+            float zDifference = originalZ - transform.position.z;
+            Vector3 correctionDirection = new Vector3(
+                1f,
+                0f,
+                Mathf.Abs(zDifference) > 0.001f ? Mathf.Sign(zDifference) : 0f).normalized;
+            Vector3 resistedDirection = Vector3.Lerp(
+                npcDirection,
+                correctionDirection,
+                noCorrectionStrength).normalized;
+            transform.position += resistedDirection * (speed * Time.deltaTime);
+        }
+        else
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                targetPosition,
+                speed * Time.deltaTime);
+        }
 
         if (PlanarSqrDistanceToNpcEdge(activeNpc) <= interactionRadius * interactionRadius)
             BeginPositioningAtNpc();
     }
 
+    private void OnNoDetected()
+    {
+        if (movementState != MovementState.ApproachingNpc)
+            return;
+
+        noCorrectionTimer = noCorrectionDuration;
+    }
+
     private void BeginPositioningAtNpc()
     {
+        noCorrectionTimer = 0f;
+        VoiceNoDetector.InputBlocked = true;
         npcInteractionSide = transform.position.x < activeNpc.position.x ? -1f : 1f;
         movementState = MovementState.PositioningAtNpc;
     }
@@ -218,6 +262,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (activeNpc != null && activeNpc.CompareTag("InteractiveNPC"))
             activeNpc.tag = "NPC";
 
+        VoiceNoDetector.InputBlocked = false;
         activeNpc = null;
         movementState = MovementState.ReturningToOriginalZ;
     }
@@ -271,6 +316,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private void OnValidate()
     {
         speed = Mathf.Max(0f, speed);
+        noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);
         if (zLimits.x > zLimits.y)

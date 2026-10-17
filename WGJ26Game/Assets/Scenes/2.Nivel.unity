@@ -340,6 +340,8 @@ MonoBehaviour:
   wrapAtLimits: 1
   xLimits: {x: -150, y: 150}
   zLimits: {x: -150, y: 150}
+  noCorrectionDuration: 0.45
+  noCorrectionStrength: 0.75
 --- !u!23 &254466909
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -462,7 +464,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSceneCircle
   npcCallDiameter: 31.1
-  npcInteractionDiameter: 8
+  npcInteractionDiameter: 6
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1773,7 +1775,7 @@ Transform:
   m_GameObject: {fileID: 1801000000}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 17.17, y: 1.55, z: 6.59}
+  m_LocalPosition: {x: 17.17, y: 1.55, z: 8.6}
   m_LocalScale: {x: 3.1, y: 3.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

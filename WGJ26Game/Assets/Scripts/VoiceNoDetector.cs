@@ -16,6 +16,9 @@ using UnityEngine.Windows.Speech;
 /// </summary>
 public sealed class VoiceNoDetector : MonoBehaviour
 {
+    public static event Action NoDetected;
+    public static bool InputBlocked { get; set; }
+
     private static readonly string[] NoPhrases =
     {
         "no",
@@ -57,7 +60,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private void Update()
     {
-        if (useVoiceControl || Keyboard.current == null)
+        if (InputBlocked || useVoiceControl || Keyboard.current == null)
             return;
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
@@ -145,7 +148,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
     private void OnPhraseRecognized(PhraseRecognizedEventArgs args)
     {
-        if (!useVoiceControl)
+        if (InputBlocked || !useVoiceControl)
             return;
 
         int detectedCount = CountNoWords(args.text);
@@ -193,7 +196,10 @@ public sealed class VoiceNoDetector : MonoBehaviour
     private void LogNo(int count)
     {
         for (int index = 0; index < count; index++)
+        {
             Debug.Log("No");
+            NoDetected?.Invoke();
+        }
 
         string detection = count == 1 ? "Detectado: No" : $"Detectados: {count} × No";
         SetStatus(useVoiceControl
