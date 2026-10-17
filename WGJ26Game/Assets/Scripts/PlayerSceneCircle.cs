@@ -15,6 +15,9 @@ public sealed class PlayerSceneCircle : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Diámetro interacción con NPC")]
     private float npcInteractionDiameter = 2.5f;
 
+    public float NpcCallRadius => npcCallDiameter * 0.5f;
+    public float NpcInteractionRadius => npcInteractionDiameter * 0.5f;
+
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
