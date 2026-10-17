@@ -36,7 +36,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     [Header("Indicador de llamada NPC")]
     [SerializeField, Range(0f, 1f)] private float npcCallIndicatorMaxAlpha = 0.65f;
-    [SerializeField, Min(0f)] private float npcInteractionVisualInset = 0.15f;
 
     private PlayerSceneCircle interactionRanges;
     private Transform activeNpc;
@@ -46,6 +45,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private float npcInteractionSide;
     private float noCorrectionTimer;
     private readonly List<Transform> waitingNpcs = new();
+    private readonly HashSet<NpcInteractionCircle> trackedNpcCircles = new();
     private GameObject npcCallIndicator;
     private Mesh npcCallIndicatorMesh;
     private Material npcCallIndicatorMaterial;
@@ -166,6 +166,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (interactionRanges == null)
             return;
 
+        foreach (NpcInteractionCircle circle in trackedNpcCircles)
+        {
+            if (circle != null)
+                circle.SetCallActive(false);
+        }
+
         for (int index = waitingNpcs.Count - 1; index >= 0; index--)
         {
             Transform queuedNpc = waitingNpcs[index];
@@ -180,6 +186,11 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         foreach (GameObject npcObject in GameObject.FindGameObjectsWithTag("InteractiveNPC"))
         {
             Transform npc = npcObject.transform;
+            NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(npc);
+            trackedNpcCircles.Add(npcCircle);
+            bool isInsideCallRange = IsInsideNpcCallRange(npc);
+            npcCircle.SetCallActive(isInsideCallRange);
+
             if (npc == activeNpc || waitingNpcs.Contains(npc))
                 continue;
 
@@ -189,7 +200,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
                 continue;
             }
 
-            if (IsInsideNpcCallRange(npc))
+            if (isInsideCallRange)
                 newCalls.Add(npc);
         }
 
@@ -224,8 +235,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
         }
 
-        float interactionRadius = GetAdjustedInteractionRadius();
-        if (PlanarSqrDistanceToNpcEdge(activeNpc) <= interactionRadius * interactionRadius)
+        float interactionDistance = GetNpcInteractionDistance(activeNpc);
+        if (PlanarCenterSqrDistance(activeNpc) <= interactionDistance * interactionDistance)
         {
             BeginPositioningAtNpc();
             return;
@@ -258,7 +269,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
                 speed * Time.deltaTime);
         }
 
-        if (PlanarSqrDistanceToNpcEdge(activeNpc) <= interactionRadius * interactionRadius)
+        if (PlanarCenterSqrDistance(activeNpc) <= interactionDistance * interactionDistance)
             BeginPositioningAtNpc();
     }
 
@@ -278,12 +289,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         movementState = MovementState.PositioningAtNpc;
     }
 
-    private float GetAdjustedInteractionRadius()
-    {
-        return Mathf.Max(0f,
-            interactionRanges.NpcInteractionRadius - npcInteractionVisualInset);
-    }
-
     private void MoveToNpcInteractionPosition()
     {
         if (activeNpc == null || !activeNpc.CompareTag("InteractiveNPC"))
@@ -292,10 +297,9 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
         }
 
-        float npcHalfWidth = GetNpcHalfWidth(activeNpc);
+        float interactionDistance = GetNpcInteractionDistance(activeNpc);
         Vector3 destination = new(
-            activeNpc.position.x + npcInteractionSide *
-                (interactionRanges.NpcInteractionRadius + npcHalfWidth),
+            activeNpc.position.x + npcInteractionSide * interactionDistance,
             transform.position.y,
             activeNpc.position.z);
 
@@ -330,10 +334,24 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         return difference.sqrMagnitude;
     }
 
-    private static float GetNpcHalfWidth(Transform npc)
+    private float PlanarCenterSqrDistance(Transform npc)
     {
-        Renderer npcRenderer = npc.GetComponent<Renderer>();
-        return npcRenderer != null ? npcRenderer.bounds.extents.x : 0f;
+        Vector3 difference = npc.position - transform.position;
+        difference.y = 0f;
+        return difference.sqrMagnitude;
+    }
+
+    private NpcInteractionCircle GetOrCreateNpcCircle(Transform npc)
+    {
+        NpcInteractionCircle circle = npc.GetComponent<NpcInteractionCircle>();
+        return circle != null ? circle : npc.gameObject.AddComponent<NpcInteractionCircle>();
+    }
+
+    private float GetNpcInteractionDistance(Transform npc)
+    {
+        NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(npc);
+        float contactDistance = interactionRanges.NpcInteractionRadius + npcCircle.Radius;
+        return Mathf.Max(0f, contactDistance - npcCircle.RequiredOverlap);
     }
 
     private bool HasPassedNpcByInteractionDiameter(Transform npc)
@@ -387,17 +405,27 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (movementState == MovementState.ApproachingNpc &&
             activeNpc != null && activeNpc.CompareTag("InteractiveNPC"))
         {
-            float edgeDistance = Mathf.Sqrt(PlanarSqrDistanceToNpcEdge(activeNpc));
-            float callRadius = interactionRanges.NpcCallRadius;
-            float interactionRadius = interactionRanges.NpcInteractionRadius;
-            float proximity = callRadius > interactionRadius
-                ? Mathf.InverseLerp(callRadius, interactionRadius, edgeDistance)
+            float centerDistance = Mathf.Sqrt(PlanarCenterSqrDistance(activeNpc));
+            NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(activeNpc);
+            float callDistance = interactionRanges.NpcCallRadius + GetNpcCallExtent(activeNpc);
+            float interactionTouchDistance = interactionRanges.NpcInteractionRadius + npcCircle.Radius;
+            float proximity = callDistance > interactionTouchDistance
+                ? Mathf.InverseLerp(callDistance, interactionTouchDistance, centerDistance)
                 : 1f;
             float earlyVisibleProximity = Mathf.Sqrt(proximity);
             alpha = npcCallIndicatorMaxAlpha * earlyVisibleProximity;
         }
 
         SetNpcCallIndicatorAlpha(alpha);
+    }
+
+    private static float GetNpcCallExtent(Transform npc)
+    {
+        Renderer npcRenderer = npc.GetComponent<Renderer>();
+        if (npcRenderer == null)
+            return 0f;
+
+        return Mathf.Max(npcRenderer.bounds.extents.x, npcRenderer.bounds.extents.z);
     }
 
     private void SetNpcCallIndicatorAlpha(float alpha)
@@ -461,7 +489,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
 
         if (activeNpc != null && activeNpc.CompareTag("InteractiveNPC"))
+        {
+            NpcInteractionCircle npcCircle = activeNpc.GetComponent<NpcInteractionCircle>();
+            if (npcCircle != null)
+                npcCircle.SetCallActive(false);
             activeNpc.tag = "NPC";
+        }
 
         VoiceNoDetector.InputBlocked = false;
         activeNpc = null;
@@ -520,7 +553,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         speed = Mathf.Max(0f, speed);
         noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
         npcCallIndicatorMaxAlpha = Mathf.Clamp01(npcCallIndicatorMaxAlpha);
-        npcInteractionVisualInset = Mathf.Max(0f, npcInteractionVisualInset);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);
         if (zLimits.x > zLimits.y)
