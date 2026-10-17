@@ -343,6 +343,7 @@ MonoBehaviour:
   noCorrectionDuration: 0.45
   noCorrectionStrength: 0.75
   npcCallIndicatorMaxAlpha: 0.35
+  npcInteractionVisualInset: 0.35
 --- !u!23 &254466909
 MeshRenderer:
   m_ObjectHideFlags: 0

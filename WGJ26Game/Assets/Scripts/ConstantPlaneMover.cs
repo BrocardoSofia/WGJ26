@@ -36,6 +36,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     [Header("Indicador de llamada NPC")]
     [SerializeField, Range(0f, 1f)] private float npcCallIndicatorMaxAlpha = 0.65f;
+    [SerializeField, Min(0f)] private float npcInteractionVisualInset = 0.15f;
 
     private PlayerSceneCircle interactionRanges;
     private Transform activeNpc;
@@ -217,7 +218,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
         }
 
-        float interactionRadius = interactionRanges.NpcInteractionRadius;
+        float interactionRadius = GetAdjustedInteractionRadius();
         if (PlanarSqrDistanceToNpcEdge(activeNpc) <= interactionRadius * interactionRadius)
         {
             BeginPositioningAtNpc();
@@ -269,6 +270,12 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         VoiceNoDetector.InputBlocked = true;
         npcInteractionSide = transform.position.x < activeNpc.position.x ? -1f : 1f;
         movementState = MovementState.PositioningAtNpc;
+    }
+
+    private float GetAdjustedInteractionRadius()
+    {
+        return Mathf.Max(0f,
+            interactionRanges.NpcInteractionRadius - npcInteractionVisualInset);
     }
 
     private void MoveToNpcInteractionPosition()
@@ -506,6 +513,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         speed = Mathf.Max(0f, speed);
         noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
         npcCallIndicatorMaxAlpha = Mathf.Clamp01(npcCallIndicatorMaxAlpha);
+        npcInteractionVisualInset = Mathf.Max(0f, npcInteractionVisualInset);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);
         if (zLimits.x > zLimits.y)
