@@ -13,12 +13,22 @@ public sealed class CountdownTimer : MonoBehaviour
     [SerializeField, InspectorName("Texto del temporizador")]
     private Text timerText;
 
+    [SerializeField, InspectorName("Estado del jugador")]
+    private PlayerCoffeeInventory playerGameState;
+
     private float remainingSeconds;
+    private bool expirationHandled;
 
     private void Awake()
     {
         remainingSeconds = initialMinutes * 60f + initialSeconds;
         RefreshText();
+    }
+
+    private void Start()
+    {
+        if (remainingSeconds <= 0f)
+            HandleTimeExpired();
     }
 
     private void Update()
@@ -28,6 +38,18 @@ public sealed class CountdownTimer : MonoBehaviour
 
         remainingSeconds = Mathf.Max(0f, remainingSeconds - Time.deltaTime);
         RefreshText();
+        if (remainingSeconds <= 0f)
+            HandleTimeExpired();
+    }
+
+    private void HandleTimeExpired()
+    {
+        if (expirationHandled)
+            return;
+
+        expirationHandled = true;
+        if (playerGameState != null)
+            playerGameState.TimeExpiredGameOver();
     }
 
     private void RefreshText()

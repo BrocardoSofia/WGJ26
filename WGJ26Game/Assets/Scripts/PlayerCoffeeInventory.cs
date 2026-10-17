@@ -20,6 +20,9 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     [SerializeField, InspectorName("Panel de Game Over")]
     private GameObject gameOverPanel;
 
+    [SerializeField, InspectorName("Texto de Game Over")]
+    private Text gameOverText;
+
     [SerializeField, InspectorName("Botón volver a intentar")]
     private Button retryButton;
 
@@ -54,8 +57,8 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
         RefreshCounter();
         if (coffeeCount >= coffeesForGameOver)
-            TriggerGameOver();
-        else if (gameOverPanel != null)
+            TriggerGameOver("GAME OVER\nPor sobredosis de café");
+        else if (!gameOver && gameOverPanel != null)
             gameOverPanel.SetActive(false);
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
@@ -70,7 +73,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         {
             coffeeCount = coffeesForGameOver - 1;
             RefreshCounter();
-            TriggerGameOver();
+            TriggerGameOver("GAME OVER\nPor sobredosis de café");
             return;
         }
 
@@ -89,13 +92,23 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
             coffeeCountText.text = $"Cafés: {coffeeCount}";
     }
 
-    private void TriggerGameOver()
+    private void TriggerGameOver(string message)
     {
+        if (gameOver)
+            return;
+
         gameOver = true;
         VoiceNoDetector.InputBlocked = true;
+        if (gameOverText != null)
+            gameOverText.text = message;
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
         Time.timeScale = 0f;
+    }
+
+    public void TimeExpiredGameOver()
+    {
+        TriggerGameOver("GAME OVER\nNo llegaste a tiempo al trabajo");
     }
 
     public void Retry()
