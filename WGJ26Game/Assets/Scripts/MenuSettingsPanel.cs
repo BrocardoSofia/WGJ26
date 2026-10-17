@@ -22,6 +22,8 @@ public sealed class MenuSettingsPanel : MonoBehaviour
     private Dropdown resolutionDropdown;
     private Dropdown languageDropdown;
 
+    public bool IsOpen => panel != null && panel.activeSelf;
+
     private void Awake()
     {
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -33,6 +35,13 @@ public sealed class MenuSettingsPanel : MonoBehaviour
         RefreshMicrophoneName();
         RefreshLocalizedTexts();
         panel.SetActive(true);
+        panel.transform.SetAsLastSibling();
+    }
+
+    public void Close()
+    {
+        if (panel != null)
+            panel.SetActive(false);
     }
 
     private void BuildPanel()
@@ -133,7 +142,7 @@ public sealed class MenuSettingsPanel : MonoBehaviour
         Text closeText = closeButton.GetComponentInChildren<Text>();
         if (closeText != null)
             closeText.fontSize = 26;
-        closeButton.onClick.AddListener(() => panel.SetActive(false));
+        closeButton.onClick.AddListener(Close);
 
         panel.SetActive(false);
     }
