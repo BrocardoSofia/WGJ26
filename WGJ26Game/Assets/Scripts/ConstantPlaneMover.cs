@@ -100,6 +100,13 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
         foreach (GameObject npc in interactiveNpcs)
         {
+            float passedDistance = transform.position.x - npc.transform.position.x;
+            if (passedDistance > interactionRanges.NpcInteractionDiameter)
+            {
+                npc.tag = "NPC";
+                continue;
+            }
+
             float sqrDistance = PlanarSqrDistanceToNpcEdge(npc.transform);
             if (sqrDistance <= callRadiusSqr && sqrDistance < nearestSqrDistance)
             {

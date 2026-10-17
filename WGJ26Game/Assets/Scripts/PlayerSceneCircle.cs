@@ -16,6 +16,7 @@ public sealed class PlayerSceneCircle : MonoBehaviour
     private float npcInteractionDiameter = 2.5f;
 
     public float NpcCallRadius => npcCallDiameter * 0.5f;
+    public float NpcInteractionDiameter => npcInteractionDiameter;
     public float NpcInteractionRadius => npcInteractionDiameter * 0.5f;
 
 #if UNITY_EDITOR
