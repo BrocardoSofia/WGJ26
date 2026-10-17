@@ -26,6 +26,15 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     [SerializeField, InspectorName("Botón volver al menú")]
     private Button returnToMenuButton;
 
+    [SerializeField, InspectorName("Panel de victoria")]
+    private GameObject victoryPanel;
+
+    [SerializeField, InspectorName("Botón ir a créditos")]
+    private Button creditsButton;
+
+    [SerializeField, InspectorName("Botón volver a jugar")]
+    private Button playAgainButton;
+
     private ConstantPlaneMover playerMovement;
     private bool gameOver;
 
@@ -38,12 +47,18 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
             retryButton.onClick.AddListener(Retry);
         if (returnToMenuButton != null)
             returnToMenuButton.onClick.AddListener(ReturnToMenu);
+        if (creditsButton != null)
+            creditsButton.onClick.AddListener(GoToCredits);
+        if (playAgainButton != null)
+            playAgainButton.onClick.AddListener(Retry);
 
         RefreshCounter();
         if (coffeeCount >= coffeesForGameOver)
             TriggerGameOver();
         else if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
     }
 
     public void AddCoffee(int amount)
@@ -93,6 +108,24 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     {
         ResumeBeforeChangingScene();
         SceneManager.LoadScene("0.Menu");
+    }
+
+    public void WinGame()
+    {
+        if (gameOver)
+            return;
+
+        gameOver = true;
+        VoiceNoDetector.InputBlocked = true;
+        if (victoryPanel != null)
+            victoryPanel.SetActive(true);
+        Time.timeScale = 0f;
+    }
+
+    public void GoToCredits()
+    {
+        ResumeBeforeChangingScene();
+        SceneManager.LoadScene("3.Creditos");
     }
 
     private void ResumeBeforeChangingScene()
