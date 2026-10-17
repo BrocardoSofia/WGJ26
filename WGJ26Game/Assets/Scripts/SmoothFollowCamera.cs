@@ -1,17 +1,20 @@
 using UnityEngine;
 
 /// <summary>
-/// Perspective 3D camera that follows a target while preserving depth.
-/// Change Offset to tune height, distance and viewing angle.
+/// Perspective 3D camera that follows a target only on the X axis.
+/// Its initial height, depth and rotation remain fixed.
 /// </summary>
 public sealed class SmoothFollowCamera : MonoBehaviour
 {
     [SerializeField] private Transform target;
-    [SerializeField] private Vector3 offset = new(0f, 12f, -12f);
     [SerializeField, Min(0f)] private float smoothTime = 0.2f;
-    [SerializeField] private bool lookAtTarget = true;
 
     private Vector3 velocity;
+    private float fixedXOffset;
+    private float fixedY;
+    private float fixedZ;
+    private Quaternion fixedRotation;
+    private bool hasInitialXOffset;
 
     public Transform Target
     {
@@ -19,18 +22,33 @@ public sealed class SmoothFollowCamera : MonoBehaviour
         set => target = value;
     }
 
+    private void Awake()
+    {
+        fixedY = transform.position.y;
+        fixedZ = transform.position.z;
+        fixedRotation = transform.rotation;
+    }
+
     private void LateUpdate()
     {
         if (target == null)
             return;
 
-        Vector3 desiredPosition = target.position + offset;
+        if (!hasInitialXOffset)
+        {
+            fixedXOffset = transform.position.x - target.position.x;
+            hasInitialXOffset = true;
+        }
+
+        Vector3 desiredPosition = new(
+            target.position.x + fixedXOffset,
+            fixedY,
+            fixedZ);
+
         transform.position = smoothTime <= 0f
             ? desiredPosition
             : Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, smoothTime);
-
-        if (lookAtTarget)
-            transform.LookAt(target.position);
+        transform.rotation = fixedRotation;
     }
 
     private void OnValidate()
