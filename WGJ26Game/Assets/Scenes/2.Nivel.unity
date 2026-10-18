@@ -2516,7 +2516,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3934815509349493803, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 25.075012
+      value: 29
       objectReference: {fileID: 0}
     - target: {fileID: 3934815509349493803, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2556,7 +2556,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6561866235931811012, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_Name
-      value: NPC_Tachito (2)
+      value: NPC_Tachito3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3474,7 +3474,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6561866235931811012, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_Name
-      value: NPC_Tachito (1)
+      value: NPC_Tachito2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6724,11 +6724,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3934815509349493803, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.55001
+      value: 2.02
       objectReference: {fileID: 0}
     - target: {fileID: 3934815509349493803, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -170.0853
+      value: -171.82
       objectReference: {fileID: 0}
     - target: {fileID: 3934815509349493803, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_LocalRotation.w
@@ -6760,7 +6760,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6561866235931811012, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_Name
-      value: NPC_Tachito (3)
+      value: NPC_Tachito4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -12892,7 +12892,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6561866235931811012, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_Name
-      value: NPC_Tachito
+      value: NPC_Tachito1
       objectReference: {fileID: 0}
     - target: {fileID: 8047647663807336753, guid: ca82968b8c5b78d49bdf64d8ce68d667, type: 3}
       propertyPath: m_Size.x
