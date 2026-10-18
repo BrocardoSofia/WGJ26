@@ -39,6 +39,11 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     [Header("Indicador de llamada NPC")]
     [SerializeField, Range(0f, 1f)] private float npcCallIndicatorMaxAlpha = 0.65f;
 
+    [Header("Indicador visual de No")]
+    [SerializeField] private GameObject noFeedbackImage;
+    [SerializeField, Min(0f), InspectorName("Segundos visible después de decir No")]
+    private float noFeedbackDuration = 1f;
+
     private PlayerSceneCircle interactionRanges;
     private PlayerCoffeeInventory coffeeInventory;
     private CameraFacingBillboard playerBillboard;
@@ -48,6 +53,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private float waitTimer;
     private float npcInteractionSide;
     private float noCorrectionTimer;
+    private float noFeedbackRemaining;
     private readonly List<Transform> waitingNpcs = new();
     private readonly HashSet<NpcInteractionCircle> trackedNpcCircles = new();
     private readonly HashSet<NpcInteractionCircle> activeNpcCirclesThisFrame = new();
@@ -67,6 +73,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         coffeeInventory = GetComponent<PlayerCoffeeInventory>();
         playerBillboard = GetComponent<CameraFacingBillboard>();
         originalZ = transform.position.z;
+        if (noFeedbackImage != null)
+            noFeedbackImage.SetActive(false);
         CreateNpcCallIndicator();
     }
 
@@ -99,6 +107,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void Update()
     {
+        UpdateNoFeedbackImage();
         UpdateNpcCallQueue();
 
         if (movementState == MovementState.WaitingAtNpc)
@@ -320,6 +329,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private void OnNoDetected()
     {
+        ShowNoFeedbackImage();
+
         if (RejectCoffeeNpcsInsideCallRange())
             return;
 
@@ -327,6 +338,25 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
 
         noCorrectionTimer = GetEffectiveNoCorrectionDuration();
+    }
+
+    private void ShowNoFeedbackImage()
+    {
+        if (noFeedbackImage == null)
+            return;
+
+        noFeedbackRemaining = noFeedbackDuration;
+        noFeedbackImage.SetActive(noFeedbackDuration > 0f);
+    }
+
+    private void UpdateNoFeedbackImage()
+    {
+        if (noFeedbackImage == null || !noFeedbackImage.activeSelf)
+            return;
+
+        noFeedbackRemaining -= Time.deltaTime;
+        if (noFeedbackRemaining <= 0f)
+            noFeedbackImage.SetActive(false);
     }
 
     private float GetEffectiveNoCorrectionDuration()
@@ -682,6 +712,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
         npcAttractionIncreasePerCoffee = Mathf.Max(0f, npcAttractionIncreasePerCoffee);
         npcCallIndicatorMaxAlpha = Mathf.Clamp01(npcCallIndicatorMaxAlpha);
+        noFeedbackDuration = Mathf.Max(0f, noFeedbackDuration);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);
         if (zLimits.x > zLimits.y)

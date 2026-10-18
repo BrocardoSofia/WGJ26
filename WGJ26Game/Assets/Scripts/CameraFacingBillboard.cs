@@ -19,6 +19,7 @@ public sealed class CameraFacingBillboard : MonoBehaviour
     private bool playerFacingOverrideActive;
     private bool playerOverrideFacesLeft;
     private float previousPositionX;
+    private SpriteRenderer playerVisualRenderer;
 
     private void Awake()
     {
@@ -26,6 +27,12 @@ public sealed class CameraFacingBillboard : MonoBehaviour
         isNpc = GetComponent<NpcInteractionCircle>() != null ||
             GetComponent<CoffeeNpc>() != null;
         isPlayer = GetComponent<ConstantPlaneMover>() != null;
+        if (isPlayer)
+        {
+            Transform playerVisual = transform.Find("PlayerVisual");
+            if (playerVisual != null)
+                playerVisualRenderer = playerVisual.GetComponent<SpriteRenderer>();
+        }
         previousPositionX = transform.position.x;
     }
 
@@ -117,6 +124,12 @@ public sealed class CameraFacingBillboard : MonoBehaviour
 
     private void SetFlippedOnX(bool flipped)
     {
+        if (isPlayer && playerVisualRenderer != null)
+        {
+            playerVisualRenderer.flipX = flipped;
+            return;
+        }
+
         Vector3 scale = transform.localScale;
         scale.x = flipped ? -initialScaleX : initialScaleX;
         transform.localScale = scale;
