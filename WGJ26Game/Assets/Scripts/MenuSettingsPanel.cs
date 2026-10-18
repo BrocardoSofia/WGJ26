@@ -7,6 +7,10 @@ using DiagnosticsProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 [DisallowMultipleComponent]
 public sealed class MenuSettingsPanel : MonoBehaviour
 {
+    private static readonly Color SelectedControlTextColor =
+        new(1f, 0.83921576f, 0.2901961f, 1f);
+    private static readonly Color UnselectedControlTextColor = Color.white;
+
     private readonly Vector2Int[] resolutions =
     {
         new(1280, 720),
@@ -313,16 +317,11 @@ public sealed class MenuSettingsPanel : MonoBehaviour
         Text text = toggle.GetComponentInChildren<Text>(true);
         if (text != null)
         {
-            text.text = toggle.isOn ? $"●  {label}" : $"○  {label}";
+            text.text = label;
             text.color = toggle.isOn
-                ? new Color(0.35f, 1f, 0.5f, 1f)
-                : Color.white;
+                ? SelectedControlTextColor
+                : UnselectedControlTextColor;
         }
-
-        if (toggle.targetGraphic != null)
-            toggle.targetGraphic.color = toggle.isOn
-                ? new Color(0.15f, 0.55f, 0.25f, 1f)
-                : new Color(0.3f, 0.3f, 0.3f, 1f);
     }
 
     private void RefreshMicrophoneName()
