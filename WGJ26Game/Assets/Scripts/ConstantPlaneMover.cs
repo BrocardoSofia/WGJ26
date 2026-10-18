@@ -475,7 +475,13 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     private NpcInteractionCircle GetOrCreateNpcCircle(Transform npc)
     {
         NpcInteractionCircle circle = npc.GetComponent<NpcInteractionCircle>();
-        return circle != null ? circle : npc.gameObject.AddComponent<NpcInteractionCircle>();
+        if (circle == null)
+            circle = npc.gameObject.AddComponent<NpcInteractionCircle>();
+
+        if (interactionRanges != null)
+            circle.SetCircleSprite(interactionRanges.ProjectionCircleSprite);
+
+        return circle;
     }
 
     private float GetNpcInteractionDistance(Transform npc)
@@ -511,6 +517,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         meshRenderer.receiveShadows = false;
 
         npcCallIndicatorMesh = CreateDiscMesh();
+        SetDiscUvs(npcCallIndicatorMesh, interactionRanges.ProjectionCircleSprite);
         meshFilter.sharedMesh = npcCallIndicatorMesh;
 
         Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -518,6 +525,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             shader = Shader.Find("Sprites/Default");
         npcCallIndicatorMaterial = new Material(shader);
         ConfigureTransparentMaterial(npcCallIndicatorMaterial);
+        ApplySpriteToMaterial(npcCallIndicatorMaterial, interactionRanges.ProjectionCircleSprite);
         meshRenderer.sharedMaterial = npcCallIndicatorMaterial;
 
         float diameter = interactionRanges.NpcInteractionDiameter;
@@ -600,6 +608,52 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
+    }
+
+    private static void SetDiscUvs(Mesh mesh, Sprite sprite)
+    {
+        if (mesh == null)
+            return;
+
+        Rect uvRect = GetSpriteUvRect(sprite);
+        Vector2[] uvs = new Vector2[IndicatorSegments + 1];
+        uvs[0] = new Vector2(uvRect.center.x, uvRect.center.y);
+
+        for (int index = 0; index < IndicatorSegments; index++)
+        {
+            float angle = index * Mathf.PI * 2f / IndicatorSegments;
+            float normalizedX = Mathf.Cos(angle) * 0.5f + 0.5f;
+            float normalizedY = Mathf.Sin(angle) * 0.5f + 0.5f;
+            uvs[index + 1] = new Vector2(
+                Mathf.Lerp(uvRect.xMin, uvRect.xMax, normalizedX),
+                Mathf.Lerp(uvRect.yMin, uvRect.yMax, normalizedY));
+        }
+
+        mesh.uv = uvs;
+    }
+
+    private static Rect GetSpriteUvRect(Sprite sprite)
+    {
+        if (sprite == null || sprite.texture == null)
+            return new Rect(0f, 0f, 1f, 1f);
+
+        Rect textureRect = sprite.textureRect;
+        return new Rect(
+            textureRect.x / sprite.texture.width,
+            textureRect.y / sprite.texture.height,
+            textureRect.width / sprite.texture.width,
+            textureRect.height / sprite.texture.height);
+    }
+
+    private static void ApplySpriteToMaterial(Material material, Sprite sprite)
+    {
+        if (material == null || sprite == null || sprite.texture == null)
+            return;
+
+        if (material.HasProperty("_BaseMap"))
+            material.SetTexture("_BaseMap", sprite.texture);
+        if (material.HasProperty("_MainTex"))
+            material.SetTexture("_MainTex", sprite.texture);
     }
 
     private static void ConfigureTransparentMaterial(Material material)

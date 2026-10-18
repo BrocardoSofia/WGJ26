@@ -18,10 +18,15 @@ public sealed class PlayerSceneCircle : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Diámetro interacción con NPC")]
     private float npcInteractionDiameter = 2.5f;
 
+    [Header("Proyección visual")]
+    [SerializeField, InspectorName("Sprite de proyección circular")]
+    private Sprite projectionCircleSprite;
+
     public float NpcCallRadius => npcCallDiameter * 0.5f;
     public float CoffeeNpcCallRadius => coffeeNpcCallDiameter * 0.5f;
     public float NpcInteractionDiameter => npcInteractionDiameter;
     public float NpcInteractionRadius => npcInteractionDiameter * 0.5f;
+    public Sprite ProjectionCircleSprite => projectionCircleSprite;
 
 #if UNITY_EDITOR
     private void OnDrawGizmos()

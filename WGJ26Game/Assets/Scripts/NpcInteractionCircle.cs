@@ -29,11 +29,24 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     private Material runtimeMaterial;
     private Renderer npcRenderer;
     private Camera mainCamera;
+    private Sprite circleSprite;
     private readonly Plane[] cameraFrustumPlanes = new Plane[6];
     private bool callActive;
 
     public float Radius => diameter * 0.5f;
     public float RequiredOverlap => requiredOverlap;
+
+    public void SetCircleSprite(Sprite sprite)
+    {
+        if (circleSprite == sprite)
+            return;
+
+        circleSprite = sprite;
+        ApplySpriteToMaterial(runtimeMaterial, circleSprite);
+
+        if (runtimeMesh != null)
+            SetDiscUvs(runtimeMesh, circleSprite);
+    }
 
     private void Awake()
     {
@@ -110,6 +123,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         meshRenderer.receiveShadows = false;
 
         runtimeMesh = CreateDiscMesh();
+        SetDiscUvs(runtimeMesh, circleSprite);
         meshFilter.sharedMesh = runtimeMesh;
 
         Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -117,6 +131,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
             shader = Shader.Find("Sprites/Default");
         runtimeMaterial = new Material(shader);
         ConfigureTransparentMaterial(runtimeMaterial);
+        ApplySpriteToMaterial(runtimeMaterial, circleSprite);
         meshRenderer.sharedMaterial = runtimeMaterial;
         SetDiscAlpha(0f);
     }
@@ -185,6 +200,52 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
+    }
+
+    private static void SetDiscUvs(Mesh mesh, Sprite sprite)
+    {
+        if (mesh == null)
+            return;
+
+        Rect uvRect = GetSpriteUvRect(sprite);
+        Vector2[] uvs = new Vector2[DiscSegments + 1];
+        uvs[0] = new Vector2(uvRect.center.x, uvRect.center.y);
+
+        for (int index = 0; index < DiscSegments; index++)
+        {
+            float angle = index * Mathf.PI * 2f / DiscSegments;
+            float normalizedX = Mathf.Cos(angle) * 0.5f + 0.5f;
+            float normalizedY = Mathf.Sin(angle) * 0.5f + 0.5f;
+            uvs[index + 1] = new Vector2(
+                Mathf.Lerp(uvRect.xMin, uvRect.xMax, normalizedX),
+                Mathf.Lerp(uvRect.yMin, uvRect.yMax, normalizedY));
+        }
+
+        mesh.uv = uvs;
+    }
+
+    private static Rect GetSpriteUvRect(Sprite sprite)
+    {
+        if (sprite == null || sprite.texture == null)
+            return new Rect(0f, 0f, 1f, 1f);
+
+        Rect textureRect = sprite.textureRect;
+        return new Rect(
+            textureRect.x / sprite.texture.width,
+            textureRect.y / sprite.texture.height,
+            textureRect.width / sprite.texture.width,
+            textureRect.height / sprite.texture.height);
+    }
+
+    private static void ApplySpriteToMaterial(Material material, Sprite sprite)
+    {
+        if (material == null || sprite == null || sprite.texture == null)
+            return;
+
+        if (material.HasProperty("_BaseMap"))
+            material.SetTexture("_BaseMap", sprite.texture);
+        if (material.HasProperty("_MainTex"))
+            material.SetTexture("_MainTex", sprite.texture);
     }
 
     private static void ConfigureTransparentMaterial(Material material)
