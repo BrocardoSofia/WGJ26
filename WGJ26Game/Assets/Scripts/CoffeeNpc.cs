@@ -40,6 +40,10 @@ public sealed class CoffeeNpc : MonoBehaviour
 
     public void Reject()
     {
+        CameraFacingBillboard billboard = GetComponent<CameraFacingBillboard>();
+        if (billboard != null)
+            billboard.FaceLeftForDeparture();
+
         movingToRejectionDestination = true;
     }
 
