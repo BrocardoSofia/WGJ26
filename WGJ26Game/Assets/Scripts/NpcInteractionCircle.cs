@@ -21,6 +21,9 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     [SerializeField, InspectorName("Color del círculo")]
     private Color circleColor = new(0f, 0.35f, 1f, 1f);
 
+    [SerializeField, InspectorName("Imagen mientras llama al Player")]
+    private GameObject callImage;
+
     private GameObject runtimeDisc;
     private Mesh runtimeMesh;
     private Material runtimeMaterial;
@@ -31,6 +34,12 @@ public sealed class NpcInteractionCircle : MonoBehaviour
 
     public float Radius => diameter * 0.5f;
     public float RequiredOverlap => requiredOverlap;
+
+    private void Awake()
+    {
+        if (callImage != null)
+            callImage.SetActive(false);
+    }
 
     private void LateUpdate()
     {
@@ -57,11 +66,16 @@ public sealed class NpcInteractionCircle : MonoBehaviour
 
     private void OnDisable()
     {
+        if (callImage != null)
+            callImage.SetActive(false);
         DestroyRuntimeDisc();
     }
 
     public void SetCallActive(bool active)
     {
+        if (callImage != null)
+            callImage.SetActive(active);
+
         if (callActive == active && enabled == active)
             return;
 
