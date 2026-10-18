@@ -33,6 +33,11 @@ public static class GameLocalization
         return IsSpanish ? GetSpanish(key) : GetEnglish(key);
     }
 
+    public static string TranslateText(string value)
+    {
+        return TranslateKnownText(value);
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void LocalizeAfterSceneLoad()
     {
@@ -58,6 +63,19 @@ public static class GameLocalization
     private static string TranslateKnownText(string value)
     {
         string normalizedValue = value.Trim();
+
+        if (normalizedValue.StartsWith("¡OH NO!") || normalizedValue.StartsWith("OH NO!"))
+            return Get("intro.story");
+
+        if (normalizedValue.StartsWith("Durante tu viaje estresante") || normalizedValue.StartsWith("During your stressful journey"))
+            return Get("intro.strangers");
+
+        if (normalizedValue.StartsWith("Para evitar las conversaciones indeseables") || normalizedValue.StartsWith("To avoid unwanted conversations"))
+            return Get("intro.avoidConversations");
+
+        if (normalizedValue.StartsWith("Tomar un café te animará") || normalizedValue.StartsWith("Drinking coffee will help you"))
+            return Get("intro.coffee");
+
         return normalizedValue switch
         {
             "Iniciar juego" or "Start game" => Get("menu.start"),
@@ -65,6 +83,7 @@ public static class GameLocalization
             "Créditos" or "Credits" => Get("menu.credits"),
             "Salir" or "Exit" => Get("menu.exit"),
             "Siguiente" or "Next" => Get("intro.next"),
+            "IMPORTANTE" or "IMPORTANT" => Get("intro.important"),
             "Menú" or "Menu" => Get("pause.menu"),
             "PAUSA" or "PAUSED" => Get("pause.title"),
             "Reanudar" or "Resume" => Get("pause.resume"),
@@ -98,6 +117,11 @@ public static class GameLocalization
             "menu.credits" => "Créditos",
             "menu.exit" => "Salir",
             "intro.next" => "Siguiente",
+            "intro.story" => "¡OH NO!\n\n¡Pasaste demasiado tiempo anoche deslizándote por TikTok y te has despertado tarde!\n\n¡El tiempo para llegar al trabajo está contado! Y encima de todo esto hay un reto más…\n\ndecirle “no” a los desconocidos.",
+            "intro.strangers" => "Durante tu viaje estresante, varios desconocidos intentarán hablar contigo; parar a hablar con los personajes demorará el tiempo limitado que tienes para llegar a tu trabajo.",
+            "intro.avoidConversations" => "Para evitar las conversaciones indeseables, di “NO” o toca la barra espaciadora.",
+            "intro.coffee" => "Tomar un café te animará a llegar más rápido al trabajo, ¡pero ojo! Si tomas más de tres cafés nunca más trabajarás…",
+            "intro.important" => "IMPORTANTE",
             "pause.menu" => "Menú",
             "pause.title" => "PAUSA",
             "pause.resume" => "Reanudar",
@@ -152,6 +176,11 @@ public static class GameLocalization
             "menu.credits" => "Credits",
             "menu.exit" => "Exit",
             "intro.next" => "Next",
+            "intro.story" => "OH NO!\n\nYou spent too much time scrolling through TikTok last night and woke up late!\n\nTime is running out to get to work! And on top of all that, there is one more challenge…\n\nsaying “no” to strangers.",
+            "intro.strangers" => "During your stressful journey, several strangers will try to talk to you. Stopping to talk to them will use up the limited time you have to get to work.",
+            "intro.avoidConversations" => "To avoid unwanted conversations, say “NO” or press the space bar.",
+            "intro.coffee" => "Drinking coffee will help you get to work faster, but be careful! If you drink more than three coffees, you will never work again…",
+            "intro.important" => "IMPORTANT",
             "pause.menu" => "Menu",
             "pause.title" => "PAUSED",
             "pause.resume" => "Resume",
