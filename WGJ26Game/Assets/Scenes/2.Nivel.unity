@@ -4021,6 +4021,7 @@ GameObject:
   - component: {fileID: 254466913}
   - component: {fileID: 254466914}
   - component: {fileID: 254466915}
+  - component: {fileID: 254466916}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -4040,7 +4041,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d37a9ece6a545445b2047573e4af3d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConstantPlaneMover
-  speed: 0
+  speed: 2
   direction: {x: 1, y: 0, z: 0}
   wrapAtLimits: 0
   xLimits: {x: -150, y: 150}
@@ -4208,6 +4209,31 @@ MonoBehaviour:
   victoryPanel: {fileID: 2203000000}
   creditsButton: {fileID: 2203100004}
   playAgainButton: {fileID: 2203200004}
+--- !u!114 &254466916
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 254466907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fae1a6aac704da1b782e4181bd03f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWalkAnimation
+  stillSprite: {fileID: 21300000, guid: f3577f353a1fbe64195c2e432a3ddeeb, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: f3577f353a1fbe64195c2e432a3ddeeb, type: 3}
+  - {fileID: 21300000, guid: 3ac96880972818f4daf13c15e44240ff, type: 3}
+  - {fileID: 21300000, guid: 9766ed5601f58224884598830725e701, type: 3}
+  - {fileID: 21300000, guid: 01180c81a9f52d545a02cd9c8c6a3a4e, type: 3}
+  - {fileID: 21300000, guid: 55c692d934e759443a5b304c1c2914bb, type: 3}
+  - {fileID: 21300000, guid: dd30315cd51c4af42b8f9b916b20be07, type: 3}
+  normalWalkFps: 10
+  oneCoffeeWalkFps: 12
+  twoCoffeeWalkFps: 14
+  threeCoffeeWalkFps: 16
+  movementThreshold: 0.0001
 --- !u!1 &256135779
 GameObject:
   m_ObjectHideFlags: 0

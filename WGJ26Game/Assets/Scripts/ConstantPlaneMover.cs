@@ -21,6 +21,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         ReturningToOriginalZ
     }
 
+    public bool IsInteractingWithNpc => movementState == MovementState.WaitingAtNpc;
+
     [Header("Movement")]
     [SerializeField, Min(0f)] private float speed = 5f;
     [SerializeField] private Vector3 direction = Vector3.right;
@@ -790,3 +792,4 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             zLimits = new Vector2(zLimits.y, zLimits.x);
     }
 }
+
