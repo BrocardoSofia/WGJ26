@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 /// <summary>
 /// Draws a random, gapless grid of sprites over the existing floor.
-/// Tiles using the same sprite share one mesh to keep the floor lightweight.
+/// Every tile uses the same sprite with a random quarter-turn rotation.
 /// </summary>
 [ExecuteAlways]
 [DisallowMultipleComponent]
@@ -15,8 +15,8 @@ public sealed class RandomFloorTiles : MonoBehaviour
     private const int MaximumTileCount = 25000;
 
     [Header("Tiles del piso")]
-    [SerializeField, InspectorName("Variantes")]
-    private Sprite[] tileVariants = Array.Empty<Sprite>();
+    [SerializeField, InspectorName("Sprite del piso")]
+    private Sprite tileSprite;
 
     [SerializeField, Min(0.1f), InspectorName("Tamaño del tile")]
     private float tileSize = 5f;
@@ -72,8 +72,7 @@ public sealed class RandomFloorTiles : MonoBehaviour
         lastConfigurationHash = hash;
         ClearGeneratedTiles();
 
-        Sprite[] variants = GetValidVariants();
-        if (variants.Length == 0)
+        if (tileSprite == null)
         {
             return;
         }
@@ -88,18 +87,13 @@ public sealed class RandomFloorTiles : MonoBehaviour
         root.hideFlags = Application.isPlaying ? HideFlags.DontSave : HideFlags.HideAndDontSave;
         root.transform.SetParent(transform, false);
 
-        var positions = new List<Vector2Int>[variants.Length];
-        for (int i = 0; i < positions.Length; i++)
-        {
-            positions[i] = new List<Vector2Int>();
-        }
-
+        var tiles = new List<Vector3Int>(columns * rows);
         System.Random random = new System.Random(randomSeed);
         for (int row = 0; row < rows; row++)
         {
             for (int column = 0; column < columns; column++)
             {
-                positions[random.Next(variants.Length)].Add(new Vector2Int(column, row));
+                tiles.Add(new Vector3Int(column, row, random.Next(4)));
             }
         }
 
@@ -107,14 +101,8 @@ public sealed class RandomFloorTiles : MonoBehaviour
         float cellDepth = bounds.size.z / rows;
         float floorY = bounds.max.y + surfaceOffset;
 
-        for (int i = 0; i < variants.Length; i++)
-        {
-            if (positions[i].Count > 0)
-            {
-                CreateVariantMesh(root.transform, variants[i], positions[i], bounds,
-                    cellWidth, cellDepth, floorY, i);
-            }
-        }
+        CreateFloorMesh(root.transform, tileSprite, tiles, bounds,
+            cellWidth, cellDepth, floorY);
     }
 
     private static void LimitGridSize(
@@ -134,17 +122,16 @@ public sealed class RandomFloorTiles : MonoBehaviour
             $"La grilla se limitó a {columns * rows} para evitar bloquear Unity.");
     }
 
-    private static void CreateVariantMesh(
+    private static void CreateFloorMesh(
         Transform parent,
         Sprite sprite,
-        List<Vector2Int> positions,
+        List<Vector3Int> tiles,
         Bounds floorBounds,
         float cellWidth,
         float cellDepth,
-        float floorY,
-        int variantIndex)
+        float floorY)
     {
-        int count = positions.Count;
+        int count = tiles.Count;
         var vertices = new Vector3[count * 4];
         var uv = new Vector2[count * 4];
         var triangles = new int[count * 6];
@@ -158,9 +145,9 @@ public sealed class RandomFloorTiles : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            float xMin = floorBounds.min.x + positions[i].x * cellWidth;
+            float xMin = floorBounds.min.x + tiles[i].x * cellWidth;
             float xMax = xMin + cellWidth;
-            float zMin = floorBounds.min.z + positions[i].y * cellDepth;
+            float zMin = floorBounds.min.z + tiles[i].y * cellDepth;
             float zMax = zMin + cellDepth;
             int vertex = i * 4;
             int triangle = i * 6;
@@ -170,10 +157,7 @@ public sealed class RandomFloorTiles : MonoBehaviour
             vertices[vertex + 2] = new Vector3(xMax, floorY, zMax);
             vertices[vertex + 3] = new Vector3(xMax, floorY, zMin);
 
-            uv[vertex] = new Vector2(uMin, vMin);
-            uv[vertex + 1] = new Vector2(uMin, vMax);
-            uv[vertex + 2] = new Vector2(uMax, vMax);
-            uv[vertex + 3] = new Vector2(uMax, vMin);
+            SetRotatedUvs(uv, vertex, tiles[i].z, uMin, uMax, vMin, vMax);
 
             triangles[triangle] = vertex;
             triangles[triangle + 1] = vertex + 1;
@@ -185,7 +169,7 @@ public sealed class RandomFloorTiles : MonoBehaviour
 
         Mesh mesh = new Mesh
         {
-            name = $"FloorTiles_Mesh_{variantIndex}",
+            name = "FloorTiles_Mesh",
             indexFormat = IndexFormat.UInt32,
             hideFlags = HideFlags.HideAndDontSave
         };
@@ -194,7 +178,7 @@ public sealed class RandomFloorTiles : MonoBehaviour
         mesh.triangles = triangles;
         mesh.RecalculateBounds();
 
-        GameObject meshObject = new GameObject($"Variante_{variantIndex + 1}");
+        GameObject meshObject = new GameObject("Piso_Rotaciones_Aleatorias");
         meshObject.hideFlags = parent.gameObject.hideFlags;
         meshObject.transform.SetParent(parent, false);
         meshObject.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -207,7 +191,7 @@ public sealed class RandomFloorTiles : MonoBehaviour
 
         Material material = new Material(shader)
         {
-            name = $"FloorTiles_Material_{variantIndex}",
+            name = "FloorTiles_Material",
             mainTexture = sprite.texture,
             hideFlags = HideFlags.HideAndDontSave
         };
@@ -218,23 +202,27 @@ public sealed class RandomFloorTiles : MonoBehaviour
         renderer.receiveShadows = false;
     }
 
-    private Sprite[] GetValidVariants()
+    private static void SetRotatedUvs(
+        Vector2[] uv,
+        int start,
+        int quarterTurns,
+        float uMin,
+        float uMax,
+        float vMin,
+        float vMax)
     {
-        if (tileVariants == null || tileVariants.Length == 0)
+        Vector2[] corners =
         {
-            return Array.Empty<Sprite>();
-        }
+            new Vector2(uMin, vMin),
+            new Vector2(uMin, vMax),
+            new Vector2(uMax, vMax),
+            new Vector2(uMax, vMin)
+        };
 
-        var variants = new List<Sprite>(tileVariants.Length);
-        for (int i = 0; i < tileVariants.Length; i++)
+        for (int corner = 0; corner < 4; corner++)
         {
-            if (tileVariants[i] != null)
-            {
-                variants.Add(tileVariants[i]);
-            }
+            uv[start + corner] = corners[(corner + quarterTurns) % 4];
         }
-
-        return variants.ToArray();
     }
 
     private int CalculateConfigurationHash(Bounds bounds)
@@ -248,15 +236,9 @@ public sealed class RandomFloorTiles : MonoBehaviour
             hash = hash * 31 + bounds.GetHashCode();
             hash = hash * 31 + transform.lossyScale.GetHashCode();
 
-            if (tileVariants != null)
-            {
-                for (int i = 0; i < tileVariants.Length; i++)
-                {
-                    hash = hash * 31 + (tileVariants[i] != null
-                        ? tileVariants[i].GetEntityId().GetHashCode()
-                        : 0);
-                }
-            }
+            hash = hash * 31 + (tileSprite != null
+                ? tileSprite.GetEntityId().GetHashCode()
+                : 0);
 
             return hash;
         }
