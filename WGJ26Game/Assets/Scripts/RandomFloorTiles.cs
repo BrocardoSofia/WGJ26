@@ -183,10 +183,16 @@ public sealed class RandomFloorTiles : MonoBehaviour
         meshObject.transform.SetParent(parent, false);
         meshObject.AddComponent<MeshFilter>().sharedMesh = mesh;
 
-        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+        // El piso es una capa visual 2D: no debe escribir profundidad porque
+        // podría recortar los billboards de personajes que atraviesan su plano.
+        Shader shader = Shader.Find("Sprites/Default");
         if (shader == null)
         {
-            shader = Shader.Find("Sprites/Default");
+            shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+        }
+        if (shader == null)
+        {
+            shader = Shader.Find("Universal Render Pipeline/Unlit");
         }
 
         Material material = new Material(shader)
@@ -195,9 +201,16 @@ public sealed class RandomFloorTiles : MonoBehaviour
             mainTexture = sprite.texture,
             hideFlags = HideFlags.HideAndDontSave
         };
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.renderQueue = (int)RenderQueue.Transparent - 100;
+        if (material.HasProperty("_Surface"))
+            material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_ZWrite"))
+            material.SetFloat("_ZWrite", 0f);
 
         MeshRenderer renderer = meshObject.AddComponent<MeshRenderer>();
         renderer.sharedMaterial = material;
+        renderer.sortingOrder = -100;
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
     }

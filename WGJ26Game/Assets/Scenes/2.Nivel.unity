@@ -4142,7 +4142,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d37a9ece6a545445b2047573e4af3d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConstantPlaneMover
-  speed: 0
+  speed: 2
   direction: {x: 1, y: 0, z: 0}
   wrapAtLimits: 0
   xLimits: {x: -150, y: 150}
@@ -7722,6 +7722,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 447555625}
+  - component: {fileID: 3400000300}
   m_Layer: 0
   m_Name: Animalitos
   m_TagString: Untagged
@@ -12474,6 +12475,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 741218116}
+  - component: {fileID: 3400000600}
   m_Layer: 0
   m_Name: Redoblantes
   m_TagString: Untagged
@@ -21776,6 +21778,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1329694946}
+  - component: {fileID: 3400000200}
   m_Layer: 0
   m_Name: VendedoresCafe
   m_TagString: Untagged
@@ -28451,6 +28454,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1747716907}
+  - component: {fileID: 3400000500}
   m_Layer: 0
   m_Name: Tachitos
   m_TagString: Untagged
@@ -34642,6 +34646,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2078198406}
+  - component: {fileID: 3400000400}
   m_Layer: 0
   m_Name: Muchachas
   m_TagString: Untagged
@@ -37975,7 +37980,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownTimer
   initialMinutes: 2
-  initialSeconds: 20
+  initialSeconds: 30
   timerText: {fileID: 2205000005}
   playerGameState: {fileID: 254466915}
 --- !u!1 &2300000000
@@ -38156,6 +38161,93 @@ MonoBehaviour:
   microphoneSprite: {fileID: 21300000, guid: 68a6dce7d07bf7d4ea8247230f9bbf3c, type: 3}
   keyboardSprite: {fileID: 21300000, guid: 62f693096a0567f43821736276541a7c, type: 3}
   targetImage: {fileID: 140677335}
+--- !u!114 &3400000200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1329694945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe5fd778436494790f1e41d6c95d377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NpcIdleAnimationGroup
+  idleFrames:
+  - {fileID: 21300000, guid: 77ab2c409a348394ca9cd239a1ce52c6, type: 3}
+  - {fileID: 21300000, guid: b742f2278dcea4249a698df1964cc9cf, type: 3}
+  - {fileID: 21300000, guid: 2a4ee369d02105a47b58f1ed965b4738, type: 3}
+  framesPerSecond: 6
+--- !u!114 &3400000300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447555624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe5fd778436494790f1e41d6c95d377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NpcIdleAnimationGroup
+  idleFrames:
+  - {fileID: 21300000, guid: b35cb6629b4845b4c8c524951e975a87, type: 3}
+  - {fileID: 21300000, guid: 7e56da31022433d40952655aa5fc3998, type: 3}
+  - {fileID: 21300000, guid: edac5ef5efc60004381ef3966e73ea7b, type: 3}
+  - {fileID: 21300000, guid: bd237c778cd0b5646985f8eede0315a1, type: 3}
+  framesPerSecond: 6
+--- !u!114 &3400000400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2078198405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe5fd778436494790f1e41d6c95d377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NpcIdleAnimationGroup
+  idleFrames:
+  - {fileID: 21300000, guid: 715bf2dbe95a94e46bbe116756544238, type: 3}
+  - {fileID: 21300000, guid: d2934ac9b457dc740bbcc088c4add4f7, type: 3}
+  - {fileID: 21300000, guid: 4d4dee3cd34fa0841b152b6436844b19, type: 3}
+  - {fileID: 21300000, guid: 3d11ddf4853e5614596abe4415e96c70, type: 3}
+  - {fileID: 21300000, guid: 3c0f823da3f090a43aaddc62957f4a69, type: 3}
+  - {fileID: 21300000, guid: d458ec9a8123c934aa5d02f4869bbff2, type: 3}
+  framesPerSecond: 6
+--- !u!114 &3400000500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1747716906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe5fd778436494790f1e41d6c95d377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NpcIdleAnimationGroup
+  idleFrames:
+  - {fileID: 21300000, guid: 3b667ce618bf46543aa58341bc7b92a4, type: 3}
+  - {fileID: 21300000, guid: e2afa7da0d0a7374282ba059323ce76b, type: 3}
+  framesPerSecond: 6
+--- !u!114 &3400000600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 741218115}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe5fd778436494790f1e41d6c95d377, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NpcIdleAnimationGroup
+  idleFrames:
+  - {fileID: 21300000, guid: 60640c9c540a06c4fb8017d5de2b5bda, type: 3}
+  - {fileID: 21300000, guid: 579ddf647bb88b14ba44c46d31d2d445, type: 3}
+  framesPerSecond: 6
 --- !u!4 &4000000203 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 192420352251873957, guid: cc723781cca76334ab1b731b3525d878, type: 3}
