@@ -10,7 +10,13 @@ public sealed class IntroController : MonoBehaviour
     private void Awake()
     {
         if (nextButton != null)
+        {
             nextButton.onClick.AddListener(GoToLevel);
+
+            Text nextButtonText = nextButton.GetComponentInChildren<Text>(true);
+            if (nextButtonText != null)
+                nextButtonText.text = GameLocalization.Get("intro.next");
+        }
     }
 
     private static void GoToLevel()
