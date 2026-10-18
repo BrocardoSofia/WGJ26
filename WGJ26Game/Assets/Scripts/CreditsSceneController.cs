@@ -1,57 +1,86 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public sealed class CreditsSceneController : MonoBehaviour
 {
-    private const string CreditsSceneName = "3.Creditos";
+    [Header("Datos que no cambian con el idioma")]
+    [SerializeField, InspectorName("Programación y diseño de nivel")]
+    private string programmerAndLevelDesigner = "Sofia Brocardo";
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void CreateCreditsInterface()
+    [SerializeField, InspectorName("UI, ilustraciones y animaciones 1")]
+    private string uiArtistOne = "Camila Boess";
+
+    [SerializeField, InspectorName("UI, ilustraciones y animaciones 2")]
+    private string uiArtistTwo = "Carla Rizzi";
+
+    [SerializeField, InspectorName("SFX y música 1")]
+    private string audioArtistOne = "Krishna Alin Shetty";
+
+    [SerializeField, InspectorName("SFX y música 2")]
+    private string audioArtistTwo = "Amelia Whelpdale";
+
+    [Header("Referencias del Canvas")]
+    [SerializeField] private Text titleText;
+    [SerializeField] private Text messageText;
+    [SerializeField] private Text teamText;
+    [SerializeField] private Text musicCreditText;
+    [SerializeField] private Text buttonText;
+    [SerializeField] private Button returnButton;
+
+    private void OnEnable()
     {
-        if (SceneManager.GetActiveScene().name != CreditsSceneName ||
-            FindAnyObjectByType<CreditsSceneController>() != null)
-            return;
+        if (returnButton != null)
+        {
+            returnButton.onClick.RemoveListener(ReturnToMainMenu);
+            returnButton.onClick.AddListener(ReturnToMainMenu);
+        }
 
-        GameObject controllerObject = new("CreditsSceneController");
-        controllerObject.AddComponent<CreditsSceneController>().BuildInterface();
+        GameLocalization.LanguageChanged += RefreshTexts;
+        RefreshTexts();
     }
 
-    private void BuildInterface()
+    private void OnDisable()
     {
-        GameObject canvasObject = new("CreditsCanvas", typeof(RectTransform), typeof(Canvas),
-            typeof(CanvasScaler), typeof(GraphicRaycaster));
+        GameLocalization.LanguageChanged -= RefreshTexts;
+        if (returnButton != null)
+        {
+            returnButton.onClick.RemoveListener(ReturnToMainMenu);
+        }
+    }
 
-        Canvas canvas = canvasObject.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+    private void RefreshTexts()
+    {
+        if (titleText != null)
+        {
+            titleText.text = GameLocalization.Get("credits.title");
+        }
 
-        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        scaler.matchWidthOrHeight = 0.5f;
+        if (messageText != null)
+        {
+            messageText.text = GameLocalization.Get("credits.message");
+        }
 
-        GameObject buttonObject = DefaultControls.CreateButton(new DefaultControls.Resources());
-        buttonObject.name = "ReturnToMainMenuButton";
-        buttonObject.transform.SetParent(canvasObject.transform, false);
+        if (teamText != null)
+        {
+            teamText.text = string.Format(
+                GameLocalization.Get("credits.team"),
+                programmerAndLevelDesigner,
+                uiArtistOne,
+                uiArtistTwo,
+                audioArtistOne,
+                audioArtistTwo);
+        }
 
-        RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(0.5f, 0f);
-        buttonRect.anchorMax = new Vector2(0.5f, 0f);
-        buttonRect.pivot = new Vector2(0.5f, 0f);
-        buttonRect.anchoredPosition = new Vector2(0f, 70f);
-        buttonRect.sizeDelta = new Vector2(420f, 80f);
+        if (musicCreditText != null)
+        {
+            musicCreditText.text = GameLocalization.Get("credits.music");
+        }
 
-        Text label = buttonObject.GetComponentInChildren<Text>();
-        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        label.fontSize = 28;
-        label.text = GameLocalization.Get("pause.mainMenu");
-
-        buttonObject.GetComponent<Button>().onClick.AddListener(ReturnToMainMenu);
-
-        if (FindAnyObjectByType<EventSystem>() == null)
-            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+        if (buttonText != null)
+        {
+            buttonText.text = GameLocalization.Get("pause.mainMenu");
+        }
     }
 
     private static void ReturnToMainMenu()

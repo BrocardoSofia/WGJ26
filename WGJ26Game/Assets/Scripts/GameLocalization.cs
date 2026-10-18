@@ -163,6 +163,10 @@ public static class GameLocalization
             "game.timeOver" => "GAME OVER\nNo llegaste a tiempo al trabajo",
             "game.goal" => "{0:0.0} mts",
             "game.time" => "{0:00}:{1:00}",
+            "credits.title" => "¡Gracias por jugar nuestro juego!",
+            "credits.message" => "En un mundo lleno de personas que suelen priorizar las necesidades de los demás antes que las propias, nuestro juego busca reflexionar sobre lo difícil que puede ser decir “no”, establecer límites y encontrar un equilibrio entre acompañar a los demás y cuidarse a uno mismo.\n\nGracias a nuestro increíble equipo, lleno de superestrellas amables y colaborativas. ¡Sin ustedes, este lindo juego no habría sido posible!",
+            "credits.team" => "Programación del juego y diseño de nivel — {0}\nUI, ilustraciones y animaciones — {1} y {2}\nSFX y música — {3} y {4}",
+            "credits.music" => "Música: “Three Red Hearts” por Abstraction\nPistas utilizadas: Box Jump · Go · Modern Bits\ntallbeard.itch.io/three-red-hearts-prepare-to-dev",
             _ => key
         };
     }
@@ -222,6 +226,10 @@ public static class GameLocalization
             "game.timeOver" => "GAME OVER\nYou did not get to work on time",
             "game.goal" => "{0:0.0} m",
             "game.time" => "{0:00}:{1:00}",
+            "credits.title" => "Thank you for playing our game!",
+            "credits.message" => "In a world full of people who often prioritize other people's needs over their own, our game invites reflection on how difficult it can be to say “no,” set boundaries, and find a balance between supporting others and taking care of yourself.\n\nThanks to our amazing team of kind and collaborative superstars. Without all of you, this lovely game would not have been possible!",
+            "credits.team" => "Game programming and level design — {0}\nUI, illustrations and animation — {1} and {2}\nSFX and music — {3} and {4}",
+            "credits.music" => "Music: “Three Red Hearts” by Abstraction\nTracks used: Box Jump · Go · Modern Bits\ntallbeard.itch.io/three-red-hearts-prepare-to-dev",
             _ => key
         };
     }
