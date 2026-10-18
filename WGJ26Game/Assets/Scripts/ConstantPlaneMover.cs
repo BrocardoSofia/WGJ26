@@ -267,6 +267,13 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private bool IsInsideNpcCallRange(Transform npc)
     {
+        if (npc != null && npc.CompareTag("CoffeeNPC"))
+        {
+            NpcInteractionCircle npcCircle = GetOrCreateNpcCircle(npc);
+            float contactDistance = interactionRanges.CoffeeNpcCallRadius + npcCircle.Radius;
+            return PlanarCenterSqrDistance(npc) <= contactDistance * contactDistance;
+        }
+
         float callRadius = GetCallRadiusForNpc(npc);
         return PlanarSqrDistanceToNpcEdge(npc) <= callRadius * callRadius;
     }
