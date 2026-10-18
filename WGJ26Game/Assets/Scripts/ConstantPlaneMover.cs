@@ -41,6 +41,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
     private PlayerSceneCircle interactionRanges;
     private PlayerCoffeeInventory coffeeInventory;
+    private CameraFacingBillboard playerBillboard;
     private Transform activeNpc;
     private MovementState movementState;
     private float originalZ;
@@ -64,6 +65,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         interactionRanges = GetComponent<PlayerSceneCircle>();
         coffeeInventory = GetComponent<PlayerCoffeeInventory>();
+        playerBillboard = GetComponent<CameraFacingBillboard>();
         originalZ = transform.position.z;
         CreateNpcCallIndicator();
     }
@@ -77,6 +79,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         VoiceNoDetector.NoDetected -= OnNoDetected;
         VoiceNoDetector.InputBlocked = false;
+        ClearInteractionFacing();
     }
 
     private void OnDestroy()
@@ -381,6 +384,8 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         noCorrectionTimer = 0f;
         VoiceNoDetector.InputBlocked = true;
         npcInteractionSide = transform.position.x < activeNpc.position.x ? -1f : 1f;
+        if (playerBillboard != null)
+            playerBillboard.SetPlayerInteractionFacing(npcInteractionSide > 0f);
         movementState = MovementState.PositioningAtNpc;
     }
 
@@ -388,6 +393,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     {
         if (!IsCallableNpc(activeNpc))
         {
+            ClearInteractionFacing();
             movementState = MovementState.ReturningToOriginalZ;
             return;
         }
@@ -612,9 +618,16 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         }
 
         VoiceNoDetector.InputBlocked = false;
+        ClearInteractionFacing();
         activeNpc = null;
         if (!TryStartNpcApproach())
             movementState = MovementState.ReturningToOriginalZ;
+    }
+
+    private void ClearInteractionFacing()
+    {
+        if (playerBillboard != null)
+            playerBillboard.ClearPlayerInteractionFacing();
     }
 
     private void ReturnToOriginalZ()
