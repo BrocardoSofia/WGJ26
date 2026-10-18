@@ -29,8 +29,88 @@ public sealed class MenuSettingsPanel : MonoBehaviour
     private void Awake()
     {
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        BuildPanel();
+        Transform existingPanel = transform.Find("SettingsPanel");
+        if (existingPanel == null)
+        {
+            BuildPanel();
+            return;
+        }
+
+        panel = existingPanel.gameObject;
+        BindExistingControls();
+        WireExistingControls();
+        panel.SetActive(false);
     }
+
+    private void BindExistingControls()
+    {
+        voiceToggle = panel.transform.Find("VoiceControl")?.GetComponent<Toggle>();
+        keyboardToggle = panel.transform.Find("KeyboardControl")?.GetComponent<Toggle>();
+        fullscreenToggle = panel.transform.Find("FullscreenToggle")?.GetComponent<Toggle>();
+        resolutionDropdown = panel.transform.Find("ResolutionDropdown")?.GetComponent<Dropdown>();
+        languageDropdown = panel.transform.Find("LanguageDropdown")?.GetComponent<Dropdown>();
+        musicSlider = panel.transform.Find("MusicVolume")?.GetComponent<Slider>();
+        effectsSlider = panel.transform.Find("EffectsVolume")?.GetComponent<Slider>();
+    }
+
+    private void WireExistingControls()
+    {
+        ToggleGroup controlGroup = panel.GetComponent<ToggleGroup>();
+        if (controlGroup == null)
+            controlGroup = panel.AddComponent<ToggleGroup>();
+        controlGroup.allowSwitchOff = false;
+        voiceToggle.group = controlGroup;
+        keyboardToggle.group = controlGroup;
+
+        voiceToggle.onValueChanged.AddListener(enabled =>
+        {
+            if (enabled)
+                GameSettings.UseVoiceControl = true;
+            UpdateControlVisuals();
+        });
+        keyboardToggle.onValueChanged.AddListener(enabled =>
+        {
+            if (enabled)
+                GameSettings.UseVoiceControl = false;
+            UpdateControlVisuals();
+        });
+        musicSlider.onValueChanged.AddListener(value => GameSettings.MusicVolume = value);
+        effectsSlider.onValueChanged.AddListener(value => GameSettings.EffectsVolume = value);
+        resolutionDropdown.onValueChanged.AddListener(OnResolutionChanged);
+        fullscreenToggle.onValueChanged.AddListener(OnFullscreenChanged);
+        languageDropdown.onValueChanged.AddListener(index =>
+        {
+            GameLocalization.SetLanguage((GameLanguage)Mathf.Clamp(index, 0, 1));
+            RefreshLocalizedTexts();
+        });
+
+        Button microphoneButton = panel.transform.Find("ChangeMicrophoneButton")?.GetComponent<Button>();
+        if (microphoneButton != null)
+            microphoneButton.onClick.AddListener(OpenWindowsMicrophoneSettings);
+        Button closeButton = panel.transform.Find("CloseSettingsButton")?.GetComponent<Button>();
+        if (closeButton != null)
+            closeButton.onClick.AddListener(Close);
+
+        RefreshSavedValues();
+        RefreshLocalizedTexts();
+    }
+
+#if UNITY_EDITOR
+    public void BuildEditorPreview()
+    {
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        Transform existingPanel = transform.Find("SettingsPanel");
+        if (existingPanel != null)
+        {
+            panel = existingPanel.gameObject;
+            panel.SetActive(true);
+            return;
+        }
+
+        BuildPanel();
+        panel.SetActive(true);
+    }
+#endif
 
     public void Open()
     {
@@ -64,7 +144,7 @@ public sealed class MenuSettingsPanel : MonoBehaviour
             new Vector2(820f, 55f), 34, FontStyle.Bold);
 
         CreateText("MicrophoneLabel", panelRect, GetMicrophoneText(), new Vector2(0f, 325f),
-            new Vector2(820f, 45f), 22);
+            new Vector2(820f, 75f), 22);
         Button microphoneButton = CreateButton("ChangeMicrophoneButton", panelRect,
             GameLocalization.Get("settings.changeMicrophone"), new Vector2(0f, 270f), new Vector2(520f, 55f));
         microphoneButton.onClick.AddListener(OpenWindowsMicrophoneSettings);

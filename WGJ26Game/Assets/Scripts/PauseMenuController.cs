@@ -19,8 +19,38 @@ public sealed class PauseMenuController : MonoBehaviour
         settingsPanel = GetComponent<MenuSettingsPanel>();
         if (settingsPanel == null)
             settingsPanel = gameObject.AddComponent<MenuSettingsPanel>();
-        BuildInterface();
+
+        Transform existingMenuButton = transform.Find("PauseMenuButton");
+        Transform existingPausePanel = transform.Find("PauseMenuPanel");
+        if (existingMenuButton == null || existingPausePanel == null)
+            BuildInterface();
+        else
+        {
+            menuButton = existingMenuButton.GetComponent<Button>();
+            pausePanel = existingPausePanel.gameObject;
+            WireExistingInterface();
+            pausePanel.SetActive(false);
+        }
     }
+
+#if UNITY_EDITOR
+    public void BuildEditorPreview()
+    {
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        Transform existingMenuButton = transform.Find("PauseMenuButton");
+        Transform existingPausePanel = transform.Find("PauseMenuPanel");
+        if (existingMenuButton == null || existingPausePanel == null)
+            BuildInterface();
+        else
+        {
+            menuButton = existingMenuButton.GetComponent<Button>();
+            pausePanel = existingPausePanel.gameObject;
+        }
+
+        menuButton.gameObject.SetActive(true);
+        pausePanel.SetActive(true);
+    }
+#endif
 
     private void Update()
     {
@@ -114,6 +144,21 @@ public sealed class PauseMenuController : MonoBehaviour
         mainMenuButton.onClick.AddListener(ReturnToMainMenu);
 
         pausePanel.SetActive(false);
+    }
+
+    private void WireExistingInterface()
+    {
+        menuButton.onClick.AddListener(PauseGame);
+
+        Button resumeButton = pausePanel.transform.Find("ResumeButton")?.GetComponent<Button>();
+        if (resumeButton != null)
+            resumeButton.onClick.AddListener(ResumeGame);
+        Button settingsButton = pausePanel.transform.Find("PauseSettingsButton")?.GetComponent<Button>();
+        if (settingsButton != null)
+            settingsButton.onClick.AddListener(OpenSettings);
+        Button mainMenuButton = pausePanel.transform.Find("MainMenuButton")?.GetComponent<Button>();
+        if (mainMenuButton != null)
+            mainMenuButton.onClick.AddListener(ReturnToMainMenu);
     }
 
     private Button CreateButton(string objectName, Transform parent, string label,

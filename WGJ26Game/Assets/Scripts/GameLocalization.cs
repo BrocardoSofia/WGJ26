@@ -98,7 +98,7 @@ public static class GameLocalization
             "pause.resume" => "Reanudar",
             "pause.mainMenu" => "Volver al menú principal",
             "settings.title" => "CONFIGURACIONES",
-            "settings.microphone" => "Micrófono predeterminado de Windows: {0}",
+            "settings.microphone" => "Micrófono predeterminado de Windows\n{0}",
             "settings.noMicrophone" => "No se detectó ningún micrófono",
             "settings.changeMicrophone" => "Cambiar micrófono en Windows",
             "settings.control" => "Control",
@@ -128,8 +128,8 @@ public static class GameLocalization
             "game.playAgain" => "Volver a jugar",
             "game.coffeeOver" => "GAME OVER\nPor sobredosis de café",
             "game.timeOver" => "GAME OVER\nNo llegaste a tiempo al trabajo",
-            "game.goal" => "Meta: {0:0.0} m",
-            "game.time" => "Tiempo: {0:00}:{1:00}",
+            "game.goal" => "{0:0.0} mts",
+            "game.time" => "{0:00}:{1:00}",
             _ => key
         };
     }
@@ -148,7 +148,7 @@ public static class GameLocalization
             "pause.resume" => "Resume",
             "pause.mainMenu" => "Return to main menu",
             "settings.title" => "SETTINGS",
-            "settings.microphone" => "Windows default microphone: {0}",
+            "settings.microphone" => "Windows default microphone\n{0}",
             "settings.noMicrophone" => "No microphone detected",
             "settings.changeMicrophone" => "Change microphone in Windows",
             "settings.control" => "Control",
@@ -178,8 +178,8 @@ public static class GameLocalization
             "game.playAgain" => "Play again",
             "game.coffeeOver" => "GAME OVER\nCoffee overdose",
             "game.timeOver" => "GAME OVER\nYou did not get to work on time",
-            "game.goal" => "Goal: {0:0.0} m",
-            "game.time" => "Time: {0:00}:{1:00}",
+            "game.goal" => "{0:0.0} m",
+            "game.time" => "{0:00}:{1:00}",
             _ => key
         };
     }
