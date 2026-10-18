@@ -447,6 +447,10 @@ public sealed class ConstantPlaneMover : MonoBehaviour
 
         waitTimer = NpcWaitSeconds;
         movementState = MovementState.WaitingAtNpc;
+
+        NpcInteractionCircle npcCircle = activeNpc.GetComponent<NpcInteractionCircle>();
+        if (npcCircle != null)
+            npcCircle.PlayInteractionAudio();
     }
 
     private float PlanarSqrDistanceToNpcEdge(Transform npc)
@@ -509,7 +513,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             return;
 
         npcCallIndicator = new GameObject("NpcCallIndicator_Runtime");
-        npcCallIndicator.hideFlags = HideFlags.DontSave;
+        npcCallIndicator.hideFlags = HideFlags.HideAndDontSave;
 
         MeshFilter meshFilter = npcCallIndicator.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = npcCallIndicator.AddComponent<MeshRenderer>();
@@ -517,6 +521,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         meshRenderer.receiveShadows = false;
 
         npcCallIndicatorMesh = CreateDiscMesh();
+        npcCallIndicatorMesh.hideFlags = HideFlags.HideAndDontSave;
         SetDiscUvs(npcCallIndicatorMesh, interactionRanges.ProjectionCircleSprite);
         meshFilter.sharedMesh = npcCallIndicatorMesh;
 
@@ -524,6 +529,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (shader == null)
             shader = Shader.Find("Sprites/Default");
         npcCallIndicatorMaterial = new Material(shader);
+        npcCallIndicatorMaterial.hideFlags = HideFlags.HideAndDontSave;
         ConfigureTransparentMaterial(npcCallIndicatorMaterial);
         ApplySpriteToMaterial(npcCallIndicatorMaterial, interactionRanges.ProjectionCircleSprite);
         meshRenderer.sharedMaterial = npcCallIndicatorMaterial;

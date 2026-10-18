@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -24,14 +25,34 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     [SerializeField, InspectorName("Imagen mientras llama al Player")]
     private GameObject callImage;
 
+    [Header("Audio del NPC")]
+    [SerializeField, InspectorName("Audio mientras llama")]
+    private AudioClip callAudio;
+
+    [SerializeField, Min(0f), InspectorName("Espera entre llamadas (segundos)")]
+    private float callAudioDelay = 1f;
+
+    [SerializeField, Range(0f, 2f), InspectorName("Volumen individual de llamada")]
+    private float callAudioVolume = 1f;
+
+    [SerializeField, InspectorName("Audio al interactuar")]
+    private AudioClip interactionAudio;
+
+    [SerializeField, Range(0f, 2f), InspectorName("Volumen individual de interacción")]
+    private float interactionAudioVolume = 1f;
+
     private GameObject runtimeDisc;
     private Mesh runtimeMesh;
     private Material runtimeMaterial;
     private Renderer npcRenderer;
     private Camera mainCamera;
     private Sprite circleSprite;
+    private AudioSource npcAudioSource;
+    private Coroutine callAudioCoroutine;
+    private float currentAudioVolume;
     private readonly Plane[] cameraFrustumPlanes = new Plane[6];
     private bool callActive;
+    private bool interactionAudioActive;
 
     public float Radius => diameter * 0.5f;
     public float RequiredOverlap => requiredOverlap;
@@ -52,6 +73,18 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     {
         if (callImage != null)
             callImage.SetActive(false);
+
+        npcAudioSource = GetComponent<AudioSource>();
+        if (npcAudioSource == null)
+            npcAudioSource = gameObject.AddComponent<AudioSource>();
+        npcAudioSource.playOnAwake = false;
+        npcAudioSource.loop = false;
+        npcAudioSource.spatialBlend = 0f;
+    }
+
+    private void OnEnable()
+    {
+        GameSettings.SettingsChanged += ApplyAudioVolume;
     }
 
     private void LateUpdate()
@@ -79,8 +112,10 @@ public sealed class NpcInteractionCircle : MonoBehaviour
 
     private void OnDisable()
     {
+        GameSettings.SettingsChanged -= ApplyAudioVolume;
         if (callImage != null)
             callImage.SetActive(false);
+        StopNpcAudio();
         DestroyRuntimeDisc();
     }
 
@@ -94,6 +129,31 @@ public sealed class NpcInteractionCircle : MonoBehaviour
 
         callActive = active;
         enabled = active;
+
+        if (active)
+            StartCallAudioCycle();
+        else
+            StopNpcAudio();
+    }
+
+    public void PlayInteractionAudio()
+    {
+        PlayPriorityAudio(interactionAudio, interactionAudioVolume);
+    }
+
+    public void PlayPriorityAudio(AudioClip clip, float individualVolume)
+    {
+        interactionAudioActive = true;
+        StopCallAudioCycle();
+
+        if (npcAudioSource == null || clip == null)
+            return;
+
+        currentAudioVolume = Mathf.Max(0f, individualVolume);
+        ApplyAudioVolume();
+        npcAudioSource.Stop();
+        npcAudioSource.clip = clip;
+        npcAudioSource.Play();
     }
 
 #if UNITY_EDITOR
@@ -115,7 +175,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
             return;
 
         runtimeDisc = new GameObject("NpcInteractionCircle_Runtime");
-        runtimeDisc.hideFlags = HideFlags.DontSave;
+        runtimeDisc.hideFlags = HideFlags.HideAndDontSave;
 
         MeshFilter meshFilter = runtimeDisc.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = runtimeDisc.AddComponent<MeshRenderer>();
@@ -123,6 +183,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         meshRenderer.receiveShadows = false;
 
         runtimeMesh = CreateDiscMesh();
+        runtimeMesh.hideFlags = HideFlags.HideAndDontSave;
         SetDiscUvs(runtimeMesh, circleSprite);
         meshFilter.sharedMesh = runtimeMesh;
 
@@ -130,6 +191,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         if (shader == null)
             shader = Shader.Find("Sprites/Default");
         runtimeMaterial = new Material(shader);
+        runtimeMaterial.hideFlags = HideFlags.HideAndDontSave;
         ConfigureTransparentMaterial(runtimeMaterial);
         ApplySpriteToMaterial(runtimeMaterial, circleSprite);
         meshRenderer.sharedMaterial = runtimeMaterial;
@@ -164,6 +226,69 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         runtimeDisc = null;
         runtimeMaterial = null;
         runtimeMesh = null;
+    }
+
+    private void StartCallAudioCycle()
+    {
+        interactionAudioActive = false;
+        StopCallAudioCycle();
+
+        if (callAudio == null || !isActiveAndEnabled)
+            return;
+
+        callAudioCoroutine = StartCoroutine(CallAudioCycle());
+    }
+
+    private IEnumerator CallAudioCycle()
+    {
+        while (callActive && !interactionAudioActive)
+        {
+            if (npcAudioSource != null)
+            {
+                currentAudioVolume = callAudioVolume;
+                ApplyAudioVolume();
+                npcAudioSource.Stop();
+                npcAudioSource.clip = callAudio;
+                npcAudioSource.Play();
+
+                while (npcAudioSource.isPlaying && callActive && !interactionAudioActive)
+                    yield return null;
+            }
+
+            if (!callActive || interactionAudioActive)
+                break;
+
+            yield return new WaitForSeconds(callAudioDelay);
+        }
+
+        callAudioCoroutine = null;
+    }
+
+    private void StopCallAudioCycle()
+    {
+        if (callAudioCoroutine == null)
+            return;
+
+        StopCoroutine(callAudioCoroutine);
+        callAudioCoroutine = null;
+    }
+
+    private void StopNpcAudio()
+    {
+        StopCallAudioCycle();
+        interactionAudioActive = false;
+
+        if (npcAudioSource != null)
+        {
+            npcAudioSource.Stop();
+            npcAudioSource.clip = null;
+        }
+    }
+
+    private void ApplyAudioVolume()
+    {
+        if (npcAudioSource != null)
+            npcAudioSource.volume = currentAudioVolume * AudioManager.SfxOutputVolume;
     }
 
     private void SetDiscAlpha(float alpha)
@@ -269,5 +394,6 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     {
         diameter = Mathf.Max(0f, diameter);
         requiredOverlap = Mathf.Clamp(requiredOverlap, 0f, diameter);
+        callAudioDelay = Mathf.Max(0f, callAudioDelay);
     }
 }

@@ -15,6 +15,13 @@ public sealed class CoffeeNpc : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Espera antes de escuchar No")]
     private float rejectionListeningDelay = 1f;
 
+    [Header("Audio de rechazo")]
+    [SerializeField, InspectorName("Audio cuando recibe un No")]
+    private AudioClip rejectionAudio;
+
+    [SerializeField, Range(0f, 2f), InspectorName("Volumen individual de rechazo")]
+    private float rejectionAudioVolume = 1f;
+
     private bool movingToRejectionDestination;
     private bool insidePlayerCallRange;
     private float enteredCallRangeTime;
@@ -40,6 +47,10 @@ public sealed class CoffeeNpc : MonoBehaviour
 
     public void Reject()
     {
+        NpcInteractionCircle interactionCircle = GetComponent<NpcInteractionCircle>();
+        if (interactionCircle != null)
+            interactionCircle.PlayPriorityAudio(rejectionAudio, rejectionAudioVolume);
+
         CameraFacingBillboard billboard = GetComponent<CameraFacingBillboard>();
         if (billboard != null)
             billboard.FaceLeftForDeparture();

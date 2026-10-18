@@ -10,6 +10,7 @@ public sealed class MusicManager : MonoBehaviour
 
     private MusicLibrary library;
     private AudioSource audioSource;
+    private AudioSource ambienceSource;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void CreatePersistentManager()
@@ -40,6 +41,12 @@ public sealed class MusicManager : MonoBehaviour
         audioSource.spatialBlend = 0f;
         audioSource.volume = AudioManager.MusicOutputVolume;
 
+        ambienceSource = gameObject.AddComponent<AudioSource>();
+        ambienceSource.playOnAwake = false;
+        ambienceSource.loop = true;
+        ambienceSource.spatialBlend = 0f;
+        ambienceSource.volume = GetAmbienceVolume();
+
         SceneManager.sceneLoaded += OnSceneLoaded;
         GameSettings.SettingsChanged += ApplyVolume;
     }
@@ -57,12 +64,15 @@ public sealed class MusicManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         PlayMusicForScene(scene.name);
+        PlayAmbienceForScene(scene.name);
     }
 
     private void ApplyVolume()
     {
         if (audioSource != null)
             audioSource.volume = AudioManager.MusicOutputVolume;
+        if (ambienceSource != null)
+            ambienceSource.volume = GetAmbienceVolume();
     }
 
     private void PlayMusicForScene(string sceneName)
@@ -95,5 +105,36 @@ public sealed class MusicManager : MonoBehaviour
             "3.Creditos" => library.CreditsMusic,
             _ => null
         };
+    }
+
+    private void PlayAmbienceForScene(string sceneName)
+    {
+        if (ambienceSource == null || library == null)
+            return;
+
+        AudioClip desiredClip = sceneName == "2.Nivel"
+            ? library.LevelCityAmbience
+            : null;
+
+        if (desiredClip == ambienceSource.clip)
+        {
+            if (desiredClip != null && !ambienceSource.isPlaying)
+                ambienceSource.Play();
+            return;
+        }
+
+        ambienceSource.Stop();
+        ambienceSource.clip = desiredClip;
+
+        if (desiredClip != null)
+            ambienceSource.Play();
+    }
+
+    private float GetAmbienceVolume()
+    {
+        if (library == null)
+            return 0f;
+
+        return AudioManager.SfxOutputVolume * library.LevelCityAmbienceVolume;
     }
 }
