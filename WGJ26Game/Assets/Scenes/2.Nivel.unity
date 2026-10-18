@@ -612,7 +612,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &143031878
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1300,7 +1300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d37a9ece6a545445b2047573e4af3d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConstantPlaneMover
-  speed: 0
+  speed: 2
   direction: {x: 1, y: 0, z: 0}
   wrapAtLimits: 0
   xLimits: {x: -150, y: 150}
@@ -1399,7 +1399,7 @@ Transform:
   m_GameObject: {fileID: 254466907}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.2, y: 1.55, z: -1.9232001}
+  m_LocalPosition: {x: -9.29, y: 1.55, z: -1.9232001}
   m_LocalScale: {x: 3.1, y: 3.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1602,7 +1602,7 @@ Camera:
   far clip plane: 1000
   field of view: 50
   orthographic: 1
-  orthographic size: 8
+  orthographic size: 10.21
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1627,7 +1627,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.38268346, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 13.55, z: -12}
+  m_LocalPosition: {x: 0, y: 16.8, z: -12}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
