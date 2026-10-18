@@ -188,6 +188,19 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         AddNpcCallsWithTag("InteractiveNPC", newCalls);
         AddNpcCallsWithTag("CoffeeNPC", newCalls);
 
+        // El círculo del NPC activo debe seguir visible durante el acercamiento,
+        // el posicionamiento y los dos segundos de interacción. Se apaga recién
+        // cuando la interacción termina y el NPC deja de ser interactuable.
+        if (IsCallableNpc(activeNpc) &&
+            (movementState == MovementState.ApproachingNpc ||
+             movementState == MovementState.PositioningAtNpc ||
+             movementState == MovementState.WaitingAtNpc))
+        {
+            NpcInteractionCircle activeCircle = GetOrCreateNpcCircle(activeNpc);
+            trackedNpcCircles.Add(activeCircle);
+            activeNpcCirclesThisFrame.Add(activeCircle);
+        }
+
         foreach (NpcInteractionCircle circle in trackedNpcCircles)
         {
             if (circle != null)
