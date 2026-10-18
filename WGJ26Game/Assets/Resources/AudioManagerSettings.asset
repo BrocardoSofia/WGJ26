@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 213d26b512184760824d544fc188cc37, type: 3}
+  m_Name: AudioManagerSettings
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManagerSettings
+  maximumMusicVolume: 0.5
+  maximumSfxVolume: 1
+  buttonHoverSound: {fileID: 8300000, guid: b8f951708bb94179ac57a7ed9bb19e51, type: 3}
+  buttonHoverVolume: 1
+  buttonClickSound: {fileID: 8300000, guid: 532952c32e194fc49f31db38341522fd, type: 3}
+  buttonClickVolume: 1.3
