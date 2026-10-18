@@ -57,7 +57,8 @@ public static class GameLocalization
 
     private static string TranslateKnownText(string value)
     {
-        return value switch
+        string normalizedValue = value.Trim();
+        return normalizedValue switch
         {
             "Iniciar juego" or "Start game" => Get("menu.start"),
             "Configuraciones" or "Settings" => Get("menu.settings"),
@@ -74,9 +75,13 @@ public static class GameLocalization
             "MODO TECLADO" or "KEYBOARD MODE" => Get("voice.modeKeyboard"),
             "Volver a intentar" or "Try again" => Get("game.retry"),
             "Volver al menú" or "Return to menu" => Get("game.menu"),
+            "GAME OVER" => Get("game.gameOverTitle"),
             "GANASTE" or "YOU WIN" => Get("game.win"),
+            "Llegaste a tiempo al trabajo" or "You got to work on time" => Get("game.winReason"),
             "Ir a créditos" or "Go to credits" => Get("game.credits"),
             "Volver a jugar" or "Play again" => Get("game.playAgain"),
+            "Por sobredosis de café" or "Coffee overdose" => Get("game.coffeeOverReason"),
+            "No llegaste a tiempo al trabajo" or "You did not get to work on time" => Get("game.timeOverReason"),
             "Control por voz (desactivar: teclado)" or "Voice control (disable: keyboard)" => Get("voice.legacyControl"),
             "GAME OVER\nPor sobredosis de café" or "GAME OVER\nCoffee overdose" => Get("game.coffeeOver"),
             "GAME OVER\nNo llegaste a tiempo al trabajo" or "GAME OVER\nYou did not get to work on time" => Get("game.timeOver"),
@@ -123,9 +128,13 @@ public static class GameLocalization
             "voice.legacyControl" => "Control por voz (desactivar: teclado)",
             "game.retry" => "Volver a intentar",
             "game.menu" => "Volver al menú",
+            "game.gameOverTitle" => "GAME OVER",
             "game.win" => "GANASTE",
+            "game.winReason" => "Llegaste a tiempo al trabajo",
             "game.credits" => "Ir a créditos",
             "game.playAgain" => "Volver a jugar",
+            "game.coffeeOverReason" => "Por sobredosis de café",
+            "game.timeOverReason" => "No llegaste a tiempo al trabajo",
             "game.coffeeOver" => "GAME OVER\nPor sobredosis de café",
             "game.timeOver" => "GAME OVER\nNo llegaste a tiempo al trabajo",
             "game.goal" => "{0:0.0} mts",
@@ -173,9 +182,13 @@ public static class GameLocalization
             "voice.legacyControl" => "Voice control (disable: keyboard)",
             "game.retry" => "Try again",
             "game.menu" => "Return to menu",
+            "game.gameOverTitle" => "GAME OVER",
             "game.win" => "YOU WIN",
+            "game.winReason" => "You got to work on time",
             "game.credits" => "Go to credits",
             "game.playAgain" => "Play again",
+            "game.coffeeOverReason" => "Coffee overdose",
+            "game.timeOverReason" => "You did not get to work on time",
             "game.coffeeOver" => "GAME OVER\nCoffee overdose",
             "game.timeOver" => "GAME OVER\nYou did not get to work on time",
             "game.goal" => "{0:0.0} m",

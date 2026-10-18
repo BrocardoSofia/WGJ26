@@ -27,6 +27,9 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     [SerializeField, InspectorName("Texto de Game Over")]
     private Text gameOverText;
 
+    [SerializeField, InspectorName("Texto de la razón del Game Over")]
+    private Text gameOverReasonText;
+
     [SerializeField, InspectorName("Botón volver a intentar")]
     private Button retryButton;
 
@@ -68,7 +71,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
         RefreshCounter();
         if (coffeeCount >= coffeesForGameOver)
-            TriggerGameOver(GameLocalization.Get("game.coffeeOver"));
+            TriggerGameOver(GameLocalization.Get("game.coffeeOverReason"));
         else if (!gameOver && gameOverPanel != null)
             gameOverPanel.SetActive(false);
         if (victoryPanel != null)
@@ -109,7 +112,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         {
             if (coffeeRemainingTimes.Count >= GetCoffeeCapacity())
             {
-                TriggerGameOver(GameLocalization.Get("game.coffeeOver"));
+                TriggerGameOver(GameLocalization.Get("game.coffeeOverReason"));
                 return;
             }
 
@@ -194,7 +197,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         }
     }
 
-    private void TriggerGameOver(string message)
+    private void TriggerGameOver(string reason)
     {
         if (gameOver)
             return;
@@ -202,7 +205,9 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         gameOver = true;
         VoiceNoDetector.InputBlocked = true;
         if (gameOverText != null)
-            gameOverText.text = message;
+            gameOverText.text = GameLocalization.Get("game.gameOverTitle");
+        if (gameOverReasonText != null)
+            gameOverReasonText.text = reason;
         if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
         Time.timeScale = 0f;
@@ -210,7 +215,7 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
     public void TimeExpiredGameOver()
     {
-        TriggerGameOver(GameLocalization.Get("game.timeOver"));
+        TriggerGameOver(GameLocalization.Get("game.timeOverReason"));
     }
 
     public void Retry()
