@@ -172,7 +172,6 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         {
             if (coffeeIcons[index] != null)
             {
-                coffeeIcons[index].color = Color.white;
                 float fillProgress;
                 if (index >= coffeeRemainingTimes.Count)
                 {
@@ -188,11 +187,11 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
                     fillProgress = 1f;
                 }
 
-                RectTransform fillRect = coffeeIcons[index].rectTransform;
-                fillRect.anchorMin = Vector2.zero;
-                fillRect.anchorMax = new Vector2(fillProgress, 1f);
-                fillRect.offsetMin = Vector2.zero;
-                fillRect.offsetMax = Vector2.zero;
+                Image coffeeIcon = coffeeIcons[index];
+                coffeeIcon.type = Image.Type.Filled;
+                coffeeIcon.fillMethod = Image.FillMethod.Horizontal;
+                coffeeIcon.fillOrigin = (int)Image.OriginHorizontal.Left;
+                coffeeIcon.fillAmount = fillProgress;
             }
         }
     }

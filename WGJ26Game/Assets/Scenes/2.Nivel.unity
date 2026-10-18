@@ -331,6 +331,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NPC_VendedorCafe (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5371478919358632958, guid: 7dad119c34227b3428de9473398d1831, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6643262518098251704, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: rejectionDestination.x
       value: -326
@@ -345,7 +349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -446.7
+      value: -436.87
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.y
@@ -353,7 +357,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -158.24
+      value: -166.65
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalRotation.w
@@ -5742,6 +5746,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NPC_VendedorCafe (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 5371478919358632958, guid: 7dad119c34227b3428de9473398d1831, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6643262518098251704, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: rejectionDestination.x
       value: -326
@@ -5756,7 +5764,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -446.7
+      value: -433.08
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.y
@@ -8927,7 +8935,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1758794607
 Transform:
   m_ObjectHideFlags: 0
@@ -9130,7 +9138,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -446.7
+      value: -420.64
       objectReference: {fileID: 0}
     - target: {fileID: 7885133763272409004, guid: 7dad119c34227b3428de9473398d1831, type: 3}
       propertyPath: m_LocalPosition.y
