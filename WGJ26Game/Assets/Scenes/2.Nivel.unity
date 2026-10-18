@@ -759,9 +759,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 088bf07fe716bff45a92b8e45525e85d, type: 3}
     - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
+      propertyPath: callAudioVolume
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
       propertyPath: interactionAudio
       value: 
       objectReference: {fileID: 8300000, guid: 088bf07fe716bff45a92b8e45525e85d, type: 3}
+    - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
+      propertyPath: interactionAudioVolume
+      value: 0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 3565838088774269659, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 49.9
@@ -1093,9 +1101,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 088bf07fe716bff45a92b8e45525e85d, type: 3}
     - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
+      propertyPath: callAudioVolume
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
       propertyPath: interactionAudio
       value: 
       objectReference: {fileID: 8300000, guid: 088bf07fe716bff45a92b8e45525e85d, type: 3}
+    - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
+      propertyPath: interactionAudioVolume
+      value: 0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 3565838088774269659, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
       propertyPath: m_LocalPosition.x
       value: -19.924988
@@ -1305,6 +1321,8 @@ MonoBehaviour:
   npcCallIndicatorMaxAlpha: 0.35
   noFeedbackImage: {fileID: 2301000000}
   noFeedbackDuration: 1
+  npcInteractionFinishedAudio: {fileID: 8300000, guid: 657d02c69ae3e6441a9912686f166336, type: 3}
+  npcInteractionFinishedAudioVolume: 0.8
 --- !u!23 &254466909
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3330,9 +3348,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 088bf07fe716bff45a92b8e45525e85d, type: 3}
     - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
+      propertyPath: callAudioVolume
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
       propertyPath: interactionAudio
       value: 
       objectReference: {fileID: 8300000, guid: 088bf07fe716bff45a92b8e45525e85d, type: 3}
+    - target: {fileID: 239562297026313099, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
+      propertyPath: interactionAudioVolume
+      value: 0.35
+      objectReference: {fileID: 0}
     - target: {fileID: 3565838088774269659, guid: d66ed122c797abb4fb0214c3d8ed2b2e, type: 3}
       propertyPath: m_LocalPosition.x
       value: -179.92499

@@ -44,6 +44,13 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Segundos visible después de decir No")]
     private float noFeedbackDuration = 1f;
 
+    [Header("Audio del Player")]
+    [SerializeField, InspectorName("Audio al terminar interacción con NPC")]
+    private AudioClip npcInteractionFinishedAudio;
+
+    [SerializeField, Range(0f, 2f), InspectorName("Volumen individual de respuesta")]
+    private float npcInteractionFinishedAudioVolume = 1f;
+
     private PlayerSceneCircle interactionRanges;
     private PlayerCoffeeInventory coffeeInventory;
     private CameraFacingBillboard playerBillboard;
@@ -702,6 +709,10 @@ public sealed class ConstantPlaneMover : MonoBehaviour
                 PlayerCoffeeInventory coffeeInventory = GetComponent<PlayerCoffeeInventory>();
                 if (coffeeInventory != null)
                     coffeeInventory.ConsumeCoffee();
+
+                AudioManager.PlaySfx(
+                    npcInteractionFinishedAudio,
+                    npcInteractionFinishedAudioVolume);
             }
 
             activeNpc.tag = "NPC";
