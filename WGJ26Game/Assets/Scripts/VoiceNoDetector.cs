@@ -6,27 +6,14 @@ using UnityEngine.UI;
 using DiagnosticsProcess = System.Diagnostics.Process;
 using DiagnosticsProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-using UnityEngine.Windows.Speech;
-#endif
-
 /// <summary>
-/// Lightweight local detection of the word "no" using the microphone selected
-/// as the Windows default input. It performs no continuous transcription.
+/// Local detection of the word "no" using the microphone selected as the
+/// Windows default input. Vosk processes partial results continuously.
 /// </summary>
 public sealed class VoiceNoDetector : MonoBehaviour
 {
     public static event Action NoDetected;
     public static bool InputBlocked { get; set; }
-
-    private static readonly string[] NoPhrases =
-    {
-        "no",
-        "no no",
-        "no no no",
-        "no no no no",
-        "no no no no no"
-    };
 
     [SerializeField] private Text statusText;
     [SerializeField] private Button openWindowsSettingsButton;
@@ -36,9 +23,7 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private bool useVoiceControl = true;
 
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-    private KeywordRecognizer recognizer;
-#endif
+    private VoskNoStreamRecognizer recognizer;
 
     private void OnEnable()
     {
@@ -62,7 +47,15 @@ public sealed class VoiceNoDetector : MonoBehaviour
 
     private void Update()
     {
-        if (InputBlocked || useVoiceControl || Keyboard.current == null)
+        if (useVoiceControl)
+        {
+            int detectedCount = recognizer?.UpdateAndGetDetectionCount() ?? 0;
+            if (!InputBlocked && detectedCount > 0)
+                QueueNo(detectedCount);
+            return;
+        }
+
+        if (InputBlocked || Keyboard.current == null)
             return;
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
@@ -114,15 +107,10 @@ public sealed class VoiceNoDetector : MonoBehaviour
     public void StartListening()
     {
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-        if (recognizer != null)
-            return;
-
         try
         {
-            recognizer = new KeywordRecognizer(NoPhrases, ConfidenceLevel.Low);
-            recognizer.OnPhraseRecognized += OnPhraseRecognized;
+            recognizer ??= new VoskNoStreamRecognizer();
             recognizer.Start();
-            Debug.Log("Detector de 'No' activo. Usa el micrófono de entrada predeterminado de Windows.");
         }
         catch (Exception exception)
         {
@@ -139,10 +127,6 @@ public sealed class VoiceNoDetector : MonoBehaviour
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
         if (recognizer == null)
             return;
-
-        if (recognizer.IsRunning)
-            recognizer.Stop();
-        recognizer.OnPhraseRecognized -= OnPhraseRecognized;
         recognizer.Dispose();
         recognizer = null;
 #endif
@@ -166,37 +150,6 @@ public sealed class VoiceNoDetector : MonoBehaviour
     {
         SetStatus(GameLocalization.Get("voice.defaultMicrophone"));
     }
-
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-    private void OnPhraseRecognized(PhraseRecognizedEventArgs args)
-    {
-        if (InputBlocked || !useVoiceControl)
-            return;
-
-        int detectedCount = CountNoWords(args.text);
-        if (detectedCount == 0)
-            return;
-
-        QueueNo(detectedCount);
-    }
-
-    private static int CountNoWords(string phrase)
-    {
-        if (string.IsNullOrWhiteSpace(phrase))
-            return 0;
-
-        int count = 0;
-        string[] words = phrase.Split(new[] { ' ', ',', '.', ';', ':', '!', '?' },
-            StringSplitOptions.RemoveEmptyEntries);
-        foreach (string word in words)
-        {
-            if (string.Equals(word, "no", StringComparison.OrdinalIgnoreCase))
-                count++;
-        }
-
-        return count;
-    }
-#endif
 
     private void QueueNo(int count)
     {

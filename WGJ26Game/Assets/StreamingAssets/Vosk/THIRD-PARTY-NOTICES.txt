@@ -1,0 +1,11 @@
+Vosk speech recognition
+Copyright 2019-2026 Alpha Cephei Inc.
+https://alphacephei.com/vosk/
+Licensed under the Apache License, Version 2.0.
+The complete license text is included at Assets/ThirdParty/Vosk/LICENSE.txt.
+
+Spanish speech recognition model
+vosk-model-small-es-0.42
+Copyright 2022-2050 AC Technologies LLC
+https://alphacephei.com/vosk/models
+Licensed under the Apache License, Version 2.0.
