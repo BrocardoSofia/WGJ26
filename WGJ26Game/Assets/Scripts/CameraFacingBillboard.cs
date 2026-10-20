@@ -20,6 +20,8 @@ public sealed class CameraFacingBillboard : MonoBehaviour
     private bool playerOverrideFacesLeft;
     private float previousPositionX;
     private SpriteRenderer playerVisualRenderer;
+    private SpriteRenderer npcVisualRenderer;
+    private SpriteRenderer trackedPlayerVisualRenderer;
 
     private void Awake()
     {
@@ -32,6 +34,14 @@ public sealed class CameraFacingBillboard : MonoBehaviour
             Transform playerVisual = transform.Find("PlayerVisual");
             if (playerVisual != null)
                 playerVisualRenderer = playerVisual.GetComponent<SpriteRenderer>();
+        }
+        else if (isNpc)
+        {
+            Transform npcVisual = transform.Find("NPCVisual");
+            if (npcVisual != null)
+                npcVisualRenderer = npcVisual.GetComponent<SpriteRenderer>();
+            if (npcVisualRenderer == null)
+                npcVisualRenderer = GetComponentInChildren<SpriteRenderer>(true);
         }
         previousPositionX = transform.position.x;
     }
@@ -84,7 +94,7 @@ public sealed class CameraFacingBillboard : MonoBehaviour
 
     private void UpdateNpcFacing()
     {
-        if (!isNpc || forceFacingLeft)
+        if (!isNpc)
             return;
 
         if (player == null)
@@ -94,11 +104,36 @@ public sealed class CameraFacingBillboard : MonoBehaviour
                 return;
 
             player = playerMover.transform;
+            Transform playerVisual = player.Find("PlayerVisual");
+            if (playerVisual != null)
+                trackedPlayerVisualRenderer = playerVisual.GetComponent<SpriteRenderer>();
         }
+
+        UpdateNpcDepthOrder();
+
+        if (forceFacingLeft)
+            return;
 
         // Los NPC están dibujados mirando a la izquierda. Solo se invierten
         // después de que el centro del Player supera el centro del NPC.
         SetFlippedOnX(player.position.x > transform.position.x);
+    }
+
+    private void UpdateNpcDepthOrder()
+    {
+        if (npcVisualRenderer == null || player == null)
+            return;
+
+        int playerOrder = trackedPlayerVisualRenderer != null
+            ? trackedPlayerVisualRenderer.sortingOrder
+            : 0;
+
+        // La cámara mira hacia Z positivo. Si el Player tiene menor Z está
+        // delante del NPC; si tiene mayor Z, está detrás.
+        bool playerIsInFront = player.position.z < transform.position.z;
+        npcVisualRenderer.sortingOrder = playerIsInFront
+            ? playerOrder - 1
+            : playerOrder + 1;
     }
 
     private void UpdatePlayerFacing()

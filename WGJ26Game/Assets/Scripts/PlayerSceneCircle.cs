@@ -19,14 +19,30 @@ public sealed class PlayerSceneCircle : MonoBehaviour
     private float npcInteractionDiameter = 2.5f;
 
     [Header("Proyección visual")]
-    [SerializeField, InspectorName("Sprite de proyección circular")]
-    private Sprite projectionCircleSprite;
+    [SerializeField, Min(0.01f), InspectorName("Ancho de la línea")]
+    private float projectionLineWidth = 0.15f;
+
+    [SerializeField, Range(0f, 1f), InspectorName("Transparencia")]
+    private float projectionAlpha = 0.65f;
+
+    [SerializeField, InspectorName("Color del Player")]
+    private Color playerProjectionColor = Color.red;
+
+    [SerializeField, InspectorName("Color de NPC interactuable")]
+    private Color interactiveNpcProjectionColor = new(0f, 0.35f, 1f, 1f);
+
+    [SerializeField, InspectorName("Color de vendedor de café")]
+    private Color coffeeNpcProjectionColor = Color.green;
 
     public float NpcCallRadius => npcCallDiameter * 0.5f;
     public float CoffeeNpcCallRadius => coffeeNpcCallDiameter * 0.5f;
     public float NpcInteractionDiameter => npcInteractionDiameter;
     public float NpcInteractionRadius => npcInteractionDiameter * 0.5f;
-    public Sprite ProjectionCircleSprite => projectionCircleSprite;
+    public float ProjectionLineWidth => projectionLineWidth;
+    public float ProjectionAlpha => projectionAlpha;
+    public Color PlayerProjectionColor => playerProjectionColor;
+    public Color InteractiveNpcProjectionColor => interactiveNpcProjectionColor;
+    public Color CoffeeNpcProjectionColor => coffeeNpcProjectionColor;
 
 #if UNITY_EDITOR
     private void OnDrawGizmos()
@@ -55,5 +71,7 @@ public sealed class PlayerSceneCircle : MonoBehaviour
         npcCallDiameter = Mathf.Max(0f, npcCallDiameter);
         coffeeNpcCallDiameter = Mathf.Max(0f, coffeeNpcCallDiameter);
         npcInteractionDiameter = Mathf.Max(0f, npcInteractionDiameter);
+        projectionLineWidth = Mathf.Max(0.01f, projectionLineWidth);
+        projectionAlpha = Mathf.Clamp01(projectionAlpha);
     }
 }

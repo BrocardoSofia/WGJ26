@@ -38,9 +38,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
     [SerializeField, Min(0f), InspectorName("Aumento de atracción por café")]
     private float npcAttractionIncreasePerCoffee = 0.25f;
 
-    [Header("Indicador de llamada NPC")]
-    [SerializeField, Range(0f, 1f)] private float npcCallIndicatorMaxAlpha = 0.65f;
-
     [Header("Indicador visual de No")]
     [SerializeField] private GameObject noFeedbackImage;
     [SerializeField, Min(0f), InspectorName("Segundos visible después de decir No")]
@@ -499,7 +496,15 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             circle = npc.gameObject.AddComponent<NpcInteractionCircle>();
 
         if (interactionRanges != null)
-            circle.SetCircleSprite(interactionRanges.ProjectionCircleSprite);
+        {
+            Color circleColor = npc.CompareTag("CoffeeNPC")
+                ? interactionRanges.CoffeeNpcProjectionColor
+                : interactionRanges.InteractiveNpcProjectionColor;
+            circle.SetVisualSettings(
+                interactionRanges.ProjectionLineWidth,
+                interactionRanges.ProjectionAlpha,
+                circleColor);
+        }
 
         return circle;
     }
@@ -536,9 +541,10 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         meshRenderer.receiveShadows = false;
 
-        npcCallIndicatorMesh = CreateDiscMesh();
+        npcCallIndicatorMesh = CreateRingMesh(
+            diameter: interactionRanges.NpcInteractionDiameter,
+            width: interactionRanges.ProjectionLineWidth);
         npcCallIndicatorMesh.hideFlags = HideFlags.HideAndDontSave;
-        SetDiscUvs(npcCallIndicatorMesh, interactionRanges.ProjectionCircleSprite);
         meshFilter.sharedMesh = npcCallIndicatorMesh;
 
         Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -547,7 +553,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         npcCallIndicatorMaterial = new Material(shader);
         npcCallIndicatorMaterial.hideFlags = HideFlags.HideAndDontSave;
         ConfigureTransparentMaterial(npcCallIndicatorMaterial);
-        ApplySpriteToMaterial(npcCallIndicatorMaterial, interactionRanges.ProjectionCircleSprite);
         meshRenderer.sharedMaterial = npcCallIndicatorMaterial;
 
         float diameter = interactionRanges.NpcInteractionDiameter;
@@ -580,7 +585,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
                 ? Mathf.InverseLerp(callDistance, interactionTouchDistance, centerDistance)
                 : 1f;
             float earlyVisibleProximity = Mathf.Sqrt(proximity);
-            alpha = npcCallIndicatorMaxAlpha * earlyVisibleProximity;
+            alpha = interactionRanges.ProjectionAlpha * earlyVisibleProximity;
         }
 
         SetNpcCallIndicatorAlpha(alpha);
@@ -600,82 +605,52 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         if (npcCallIndicatorMaterial == null)
             return;
 
-        Color color = new(1f, 0f, 0f, Mathf.Clamp01(alpha));
+        Color configuredColor = interactionRanges.PlayerProjectionColor;
+        Color color = new(
+            configuredColor.r,
+            configuredColor.g,
+            configuredColor.b,
+            Mathf.Clamp01(alpha));
         if (npcCallIndicatorMaterial.HasProperty("_BaseColor"))
             npcCallIndicatorMaterial.SetColor("_BaseColor", color);
         if (npcCallIndicatorMaterial.HasProperty("_Color"))
             npcCallIndicatorMaterial.SetColor("_Color", color);
     }
 
-    private static Mesh CreateDiscMesh()
+    private static Mesh CreateRingMesh(float diameter, float width)
     {
-        Vector3[] vertices = new Vector3[IndicatorSegments + 1];
-        int[] triangles = new int[IndicatorSegments * 3];
-        vertices[0] = Vector3.zero;
+        float normalizedWidth = diameter > Mathf.Epsilon
+            ? Mathf.Clamp(width / diameter, 0.001f, 0.5f)
+            : 0.5f;
+        float innerRadius = 0.5f - normalizedWidth;
+        Vector3[] vertices = new Vector3[IndicatorSegments * 2];
+        int[] triangles = new int[IndicatorSegments * 6];
 
         for (int index = 0; index < IndicatorSegments; index++)
         {
             float angle = index * Mathf.PI * 2f / IndicatorSegments;
-            vertices[index + 1] = new Vector3(Mathf.Cos(angle) * 0.5f, 0f, Mathf.Sin(angle) * 0.5f);
+            float x = Mathf.Cos(angle);
+            float z = Mathf.Sin(angle);
+            int vertexIndex = index * 2;
+            vertices[vertexIndex] = new Vector3(x * 0.5f, 0f, z * 0.5f);
+            vertices[vertexIndex + 1] = new Vector3(x * innerRadius, 0f, z * innerRadius);
 
-            int triangleIndex = index * 3;
-            triangles[triangleIndex] = 0;
-            triangles[triangleIndex + 1] = index + 1;
-            triangles[triangleIndex + 2] = (index + 1) % IndicatorSegments + 1;
+            int nextVertexIndex = ((index + 1) % IndicatorSegments) * 2;
+            int triangleIndex = index * 6;
+            triangles[triangleIndex] = vertexIndex;
+            triangles[triangleIndex + 1] = nextVertexIndex;
+            triangles[triangleIndex + 2] = vertexIndex + 1;
+            triangles[triangleIndex + 3] = vertexIndex + 1;
+            triangles[triangleIndex + 4] = nextVertexIndex;
+            triangles[triangleIndex + 5] = nextVertexIndex + 1;
         }
 
-        Mesh mesh = new() { name = "NPC Call Indicator Disc" };
+        Mesh mesh = new() { name = "NPC Call Indicator Ring" };
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
-    }
-
-    private static void SetDiscUvs(Mesh mesh, Sprite sprite)
-    {
-        if (mesh == null)
-            return;
-
-        Rect uvRect = GetSpriteUvRect(sprite);
-        Vector2[] uvs = new Vector2[IndicatorSegments + 1];
-        uvs[0] = new Vector2(uvRect.center.x, uvRect.center.y);
-
-        for (int index = 0; index < IndicatorSegments; index++)
-        {
-            float angle = index * Mathf.PI * 2f / IndicatorSegments;
-            float normalizedX = Mathf.Cos(angle) * 0.5f + 0.5f;
-            float normalizedY = Mathf.Sin(angle) * 0.5f + 0.5f;
-            uvs[index + 1] = new Vector2(
-                Mathf.Lerp(uvRect.xMin, uvRect.xMax, normalizedX),
-                Mathf.Lerp(uvRect.yMin, uvRect.yMax, normalizedY));
-        }
-
-        mesh.uv = uvs;
-    }
-
-    private static Rect GetSpriteUvRect(Sprite sprite)
-    {
-        if (sprite == null || sprite.texture == null)
-            return new Rect(0f, 0f, 1f, 1f);
-
-        Rect textureRect = sprite.textureRect;
-        return new Rect(
-            textureRect.x / sprite.texture.width,
-            textureRect.y / sprite.texture.height,
-            textureRect.width / sprite.texture.width,
-            textureRect.height / sprite.texture.height);
-    }
-
-    private static void ApplySpriteToMaterial(Material material, Sprite sprite)
-    {
-        if (material == null || sprite == null || sprite.texture == null)
-            return;
-
-        if (material.HasProperty("_BaseMap"))
-            material.SetTexture("_BaseMap", sprite.texture);
-        if (material.HasProperty("_MainTex"))
-            material.SetTexture("_MainTex", sprite.texture);
     }
 
     private static void ConfigureTransparentMaterial(Material material)
@@ -717,7 +692,7 @@ public sealed class ConstantPlaneMover : MonoBehaviour
             {
                 PlayerCoffeeInventory coffeeInventory = GetComponent<PlayerCoffeeInventory>();
                 if (coffeeInventory != null)
-                    coffeeInventory.ConsumeCoffee();
+                    coffeeInventory.ConsumeHalfCoffee();
 
                 AudioManager.PlaySfx(
                     npcInteractionFinishedAudio,
@@ -791,7 +766,6 @@ public sealed class ConstantPlaneMover : MonoBehaviour
         speed = Mathf.Max(0f, speed);
         noCorrectionDuration = Mathf.Max(0f, noCorrectionDuration);
         npcAttractionIncreasePerCoffee = Mathf.Max(0f, npcAttractionIncreasePerCoffee);
-        npcCallIndicatorMaxAlpha = Mathf.Clamp01(npcCallIndicatorMaxAlpha);
         noFeedbackDuration = Mathf.Max(0f, noFeedbackDuration);
         if (xLimits.x > xLimits.y)
             xLimits = new Vector2(xLimits.y, xLimits.x);

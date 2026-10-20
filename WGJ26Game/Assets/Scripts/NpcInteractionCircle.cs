@@ -10,8 +10,8 @@ using UnityEngine.Rendering;
 public sealed class NpcInteractionCircle : MonoBehaviour
 {
     private const int DiscSegments = 64;
+    private const int DiscSortingOffset = 10;
     private const float GroundOffset = 0.04f;
-    private const float VisibleAlpha = 0.45f;
 
     [SerializeField, Min(0f), InspectorName("Diámetro de interacción NPC")]
     private float diameter = 2f;
@@ -44,9 +44,11 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     private GameObject runtimeDisc;
     private Mesh runtimeMesh;
     private Material runtimeMaterial;
+    private MeshRenderer runtimeDiscRenderer;
     private Renderer npcRenderer;
     private Camera mainCamera;
-    private Sprite circleSprite;
+    private float lineWidth = 0.15f;
+    private float visibleAlpha = 0.65f;
     private AudioSource npcAudioSource;
     private Coroutine callAudioCoroutine;
     private float currentAudioVolume;
@@ -57,16 +59,22 @@ public sealed class NpcInteractionCircle : MonoBehaviour
     public float Radius => diameter * 0.5f;
     public float RequiredOverlap => requiredOverlap;
 
-    public void SetCircleSprite(Sprite sprite)
+    public void SetVisualSettings(float newLineWidth, float newAlpha, Color newColor)
     {
-        if (circleSprite == sprite)
+        newLineWidth = Mathf.Max(0.01f, newLineWidth);
+        newAlpha = Mathf.Clamp01(newAlpha);
+        bool meshNeedsRebuild = !Mathf.Approximately(lineWidth, newLineWidth);
+        bool colorChanged = circleColor != newColor || !Mathf.Approximately(visibleAlpha, newAlpha);
+        if (!meshNeedsRebuild && !colorChanged)
             return;
 
-        circleSprite = sprite;
-        ApplySpriteToMaterial(runtimeMaterial, circleSprite);
+        lineWidth = newLineWidth;
+        visibleAlpha = newAlpha;
+        circleColor = newColor;
 
-        if (runtimeMesh != null)
-            SetDiscUvs(runtimeMesh, circleSprite);
+        if (meshNeedsRebuild && runtimeMesh != null)
+            RebuildRingMesh(runtimeMesh, diameter, lineWidth);
+        SetDiscAlpha(callActive ? visibleAlpha : 0f);
     }
 
     private void Awake()
@@ -102,7 +110,8 @@ public sealed class NpcInteractionCircle : MonoBehaviour
             new Vector3(transform.position.x, groundY, transform.position.z),
             Quaternion.identity);
         runtimeDisc.transform.localScale = new Vector3(diameter, 1f, diameter);
-        SetDiscAlpha(callActive ? VisibleAlpha : 0f);
+        UpdateDiscSortingOrder();
+        SetDiscAlpha(callActive ? visibleAlpha : 0f);
     }
 
     private void OnDestroy()
@@ -178,13 +187,12 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         runtimeDisc.hideFlags = HideFlags.HideAndDontSave;
 
         MeshFilter meshFilter = runtimeDisc.AddComponent<MeshFilter>();
-        MeshRenderer meshRenderer = runtimeDisc.AddComponent<MeshRenderer>();
-        meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        meshRenderer.receiveShadows = false;
+        runtimeDiscRenderer = runtimeDisc.AddComponent<MeshRenderer>();
+        runtimeDiscRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        runtimeDiscRenderer.receiveShadows = false;
 
-        runtimeMesh = CreateDiscMesh();
+        runtimeMesh = CreateRingMesh(diameter, lineWidth);
         runtimeMesh.hideFlags = HideFlags.HideAndDontSave;
-        SetDiscUvs(runtimeMesh, circleSprite);
         meshFilter.sharedMesh = runtimeMesh;
 
         Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -193,9 +201,18 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         runtimeMaterial = new Material(shader);
         runtimeMaterial.hideFlags = HideFlags.HideAndDontSave;
         ConfigureTransparentMaterial(runtimeMaterial);
-        ApplySpriteToMaterial(runtimeMaterial, circleSprite);
-        meshRenderer.sharedMaterial = runtimeMaterial;
+        runtimeDiscRenderer.sharedMaterial = runtimeMaterial;
+        UpdateDiscSortingOrder();
         SetDiscAlpha(0f);
+    }
+
+    private void UpdateDiscSortingOrder()
+    {
+        if (runtimeDiscRenderer == null || npcRenderer == null)
+            return;
+
+        runtimeDiscRenderer.sortingLayerID = npcRenderer.sortingLayerID;
+        runtimeDiscRenderer.sortingOrder = npcRenderer.sortingOrder - DiscSortingOffset;
     }
 
     private bool IsVisibleToMainCamera()
@@ -205,8 +222,16 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         if (mainCamera == null)
             return false;
 
-        if (npcRenderer == null)
-            npcRenderer = GetComponent<Renderer>();
+        if (npcRenderer == null || !npcRenderer.enabled)
+        {
+            Transform npcVisual = transform.Find("NPCVisual");
+            SpriteRenderer visibleSprite = npcVisual != null
+                ? npcVisual.GetComponent<SpriteRenderer>()
+                : GetComponentInChildren<SpriteRenderer>(true);
+            npcRenderer = visibleSprite != null
+                ? visibleSprite
+                : GetComponent<Renderer>();
+        }
         if (npcRenderer == null)
             return false;
 
@@ -226,6 +251,7 @@ public sealed class NpcInteractionCircle : MonoBehaviour
         runtimeDisc = null;
         runtimeMaterial = null;
         runtimeMesh = null;
+        runtimeDiscRenderer = null;
     }
 
     private void StartCallAudioCycle()
@@ -297,80 +323,53 @@ public sealed class NpcInteractionCircle : MonoBehaviour
             return;
 
         Color color = new(circleColor.r, circleColor.g, circleColor.b,
-            Mathf.Clamp01(alpha * circleColor.a));
+            Mathf.Clamp01(alpha));
         if (runtimeMaterial.HasProperty("_BaseColor"))
             runtimeMaterial.SetColor("_BaseColor", color);
         if (runtimeMaterial.HasProperty("_Color"))
             runtimeMaterial.SetColor("_Color", color);
     }
 
-    private static Mesh CreateDiscMesh()
+    private static Mesh CreateRingMesh(float diameter, float width)
     {
-        Vector3[] vertices = new Vector3[DiscSegments + 1];
-        int[] triangles = new int[DiscSegments * 3];
+        Mesh mesh = new() { name = "NPC Interaction Ring" };
+        RebuildRingMesh(mesh, diameter, width);
+        return mesh;
+    }
+
+    private static void RebuildRingMesh(Mesh mesh, float diameter, float width)
+    {
+        float normalizedWidth = diameter > Mathf.Epsilon
+            ? Mathf.Clamp(width / diameter, 0.001f, 0.5f)
+            : 0.5f;
+        float innerRadius = 0.5f - normalizedWidth;
+        Vector3[] vertices = new Vector3[DiscSegments * 2];
+        int[] triangles = new int[DiscSegments * 6];
 
         for (int index = 0; index < DiscSegments; index++)
         {
             float angle = index * Mathf.PI * 2f / DiscSegments;
-            vertices[index + 1] = new Vector3(Mathf.Cos(angle) * 0.5f, 0f, Mathf.Sin(angle) * 0.5f);
-            int triangleIndex = index * 3;
-            triangles[triangleIndex] = 0;
-            triangles[triangleIndex + 1] = index + 1;
-            triangles[triangleIndex + 2] = (index + 1) % DiscSegments + 1;
+            float x = Mathf.Cos(angle);
+            float z = Mathf.Sin(angle);
+            int vertexIndex = index * 2;
+            vertices[vertexIndex] = new Vector3(x * 0.5f, 0f, z * 0.5f);
+            vertices[vertexIndex + 1] = new Vector3(x * innerRadius, 0f, z * innerRadius);
+
+            int nextVertexIndex = ((index + 1) % DiscSegments) * 2;
+            int triangleIndex = index * 6;
+            triangles[triangleIndex] = vertexIndex;
+            triangles[triangleIndex + 1] = nextVertexIndex;
+            triangles[triangleIndex + 2] = vertexIndex + 1;
+            triangles[triangleIndex + 3] = vertexIndex + 1;
+            triangles[triangleIndex + 4] = nextVertexIndex;
+            triangles[triangleIndex + 5] = nextVertexIndex + 1;
         }
 
-        Mesh mesh = new() { name = "NPC Interaction Disc" };
+        mesh.Clear();
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-        return mesh;
-    }
-
-    private static void SetDiscUvs(Mesh mesh, Sprite sprite)
-    {
-        if (mesh == null)
-            return;
-
-        Rect uvRect = GetSpriteUvRect(sprite);
-        Vector2[] uvs = new Vector2[DiscSegments + 1];
-        uvs[0] = new Vector2(uvRect.center.x, uvRect.center.y);
-
-        for (int index = 0; index < DiscSegments; index++)
-        {
-            float angle = index * Mathf.PI * 2f / DiscSegments;
-            float normalizedX = Mathf.Cos(angle) * 0.5f + 0.5f;
-            float normalizedY = Mathf.Sin(angle) * 0.5f + 0.5f;
-            uvs[index + 1] = new Vector2(
-                Mathf.Lerp(uvRect.xMin, uvRect.xMax, normalizedX),
-                Mathf.Lerp(uvRect.yMin, uvRect.yMax, normalizedY));
-        }
-
-        mesh.uv = uvs;
-    }
-
-    private static Rect GetSpriteUvRect(Sprite sprite)
-    {
-        if (sprite == null || sprite.texture == null)
-            return new Rect(0f, 0f, 1f, 1f);
-
-        Rect textureRect = sprite.textureRect;
-        return new Rect(
-            textureRect.x / sprite.texture.width,
-            textureRect.y / sprite.texture.height,
-            textureRect.width / sprite.texture.width,
-            textureRect.height / sprite.texture.height);
-    }
-
-    private static void ApplySpriteToMaterial(Material material, Sprite sprite)
-    {
-        if (material == null || sprite == null || sprite.texture == null)
-            return;
-
-        if (material.HasProperty("_BaseMap"))
-            material.SetTexture("_BaseMap", sprite.texture);
-        if (material.HasProperty("_MainTex"))
-            material.SetTexture("_MainTex", sprite.texture);
     }
 
     private static void ConfigureTransparentMaterial(Material material)

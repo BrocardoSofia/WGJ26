@@ -126,10 +126,38 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
 
     public void ConsumeCoffee()
     {
+        ConsumeCoffeeTime(coffeeDurationSeconds);
+    }
+
+    public void ConsumeHalfCoffee()
+    {
+        ConsumeCoffeeTime(coffeeDurationSeconds * 0.5f);
+    }
+
+    private void ConsumeCoffeeTime(float timeToConsume)
+    {
         if (coffeeRemainingTimes.Count == 0 || gameOver)
             return;
 
-        RemoveOldestCoffee();
+        float remainingTimeToConsume = Mathf.Max(0f, timeToConsume);
+        while (remainingTimeToConsume > 0f && coffeeRemainingTimes.Count > 0)
+        {
+            int oldestCoffeeIndex = coffeeRemainingTimes.Count - 1;
+            float oldestRemainingTime = coffeeRemainingTimes[oldestCoffeeIndex];
+
+            if (oldestRemainingTime > remainingTimeToConsume)
+            {
+                coffeeRemainingTimes[oldestCoffeeIndex] =
+                    oldestRemainingTime - remainingTimeToConsume;
+                remainingTimeToConsume = 0f;
+            }
+            else
+            {
+                remainingTimeToConsume -= oldestRemainingTime;
+                RemoveOldestCoffee();
+            }
+        }
+
         RefreshCounter();
     }
 
