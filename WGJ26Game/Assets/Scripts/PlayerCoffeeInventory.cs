@@ -21,6 +21,13 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     [SerializeField, Min(1), InspectorName("Cafés para Game Over")]
     private int coffeesForGameOver = 4;
 
+    [Header("Audio del Player")]
+    [SerializeField, InspectorName("Audio al tomar café")]
+    private AudioClip coffeeReceivedAudio;
+
+    [SerializeField, Range(0f, 2f), InspectorName("Volumen individual al tomar café")]
+    private float coffeeReceivedAudioVolume = 1f;
+
     [SerializeField, InspectorName("Panel de Game Over")]
     private GameObject gameOverPanel;
 
@@ -107,6 +114,8 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
     {
         if (amount <= 0 || gameOver)
             return;
+
+        AudioManager.PlaySfx(coffeeReceivedAudio, coffeeReceivedAudioVolume);
 
         for (int index = 0; index < amount; index++)
         {
@@ -295,5 +304,6 @@ public sealed class PlayerCoffeeInventory : MonoBehaviour
         speedIncreasePerCoffee = Mathf.Max(0f, speedIncreasePerCoffee);
         coffeeDurationSeconds = Mathf.Max(0.1f, coffeeDurationSeconds);
         coffeesForGameOver = Mathf.Max(1, coffeesForGameOver);
+        coffeeReceivedAudioVolume = Mathf.Clamp(coffeeReceivedAudioVolume, 0f, 2f);
     }
 }
